@@ -19,36 +19,12 @@ class LLMSettings(ProjectBaseSettings):
     llm_max_tokens: int = 16384
 
 
-class GoogleCalendarSettings(ProjectBaseSettings):
-    google_calendar_enabled: bool = False
-    google_credentials_path: str = "./credentials.json"
-    google_token_path: str = "./token.json"
-    google_calendar_id: str = "primary"
-
-
-class EmailSettings(ProjectBaseSettings):
-    email_enabled: bool = False
-    smtp_server: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    email_from: str | None = None
-    email_password: str | None = None
-    email_use_tls: bool = True
-
-
-class ProjectSettings(LLMSettings, GoogleCalendarSettings, EmailSettings):
-    save_dir: str = "reminders"
+class ProjectSettings(LLMSettings):
+    research_dir: str = "src/papers"
 
     @property
     def llm(self) -> LLMSettings:
         return LLMSettings(**self.model_dump())
-
-    @property
-    def google_calendar(self) -> GoogleCalendarSettings:
-        return GoogleCalendarSettings(**self.model_dump())
-
-    @property
-    def email(self) -> EmailSettings:
-        return EmailSettings(**self.model_dump())
 
 
 settings = ProjectSettings()

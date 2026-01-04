@@ -1,12 +1,10 @@
-"""Main entry point for the Calendar Reminder Agent."""
-
 import asyncio
-from src.client import main as client_main
+from src.clients.agent import main as agent_main
 
 
 def main():
-    """Run the Calendar Reminder Agent client."""
-    asyncio.run(client_main())
+    """Run the Research Agent client."""
+    asyncio.run(agent_main())
 
 
 if __name__ == "__main__":
