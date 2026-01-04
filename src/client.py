@@ -1,8 +1,6 @@
-import os
 import json
 import asyncio
 import nest_asyncio
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -13,10 +11,9 @@ from openai.types.chat.chat_completion_function_tool_param import (
 from openai.types.chat.chat_completion_tool_message_param import (
     ChatCompletionToolMessageParam,
 )
+from src.settings import settings
 
 nest_asyncio.apply()
-
-load_dotenv("/Users/phung.pham/Documents/PHUNGPX/LVLM-tutorials/mcp_anthropic/.env")
 
 
 class MCPCompatibleChatbot:
@@ -29,7 +26,6 @@ class MCPCompatibleChatbot:
         self.sessions: dict[str, ClientSession] = {}
 
     async def connect_to_server(self, server_name: str, server_config: dict) -> None:
-        """Connect to a single MCP server."""
         try:
             server_params = StdioServerParameters(**server_config)
             stdio_transport = await self.exit_stack.enter_async_context(
@@ -51,6 +47,7 @@ class MCPCompatibleChatbot:
                 )
 
                 for tool in tools_response.tools:
+                    print(f"Tool: {tool.name} - {tool.inputSchema}")
                     self.sessions[tool.name] = session
                     self.available_tools.append(
                         {
@@ -58,7 +55,9 @@ class MCPCompatibleChatbot:
                             "function": {
                                 "name": tool.name,
                                 "description": tool.description,
-                                "parameters": tool.inputSchema,
+                                "parameters": (
+                                    tool.inputSchema if tool.inputSchema else {}
+                                ),
                             },
                         }
                     )
@@ -86,18 +85,15 @@ class MCPCompatibleChatbot:
             print(f"Failed to connect to {server_name}: {e}")
 
     async def connect_to_servers(self):
-        """Connect to all configured MCP servers."""
         try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            with open(
-                os.path.join(current_dir, "server_config.json"), mode="r"
-            ) as file:
-                data = json.load(file)
-            servers = data.get("mcpServers", {})
-            for server_name, server_config in servers.items():
-                await self.connect_to_server(server_name, server_config)
+            # Use the reminder server directly
+            server_config = {
+                "command": "uv",
+                "args": ["run", "python", "-m", "src.server"],
+            }
+            await self.connect_to_server("reminder_agent", server_config)
         except Exception as e:
-            print(f"Error loading server configuration: {e}")
+            print(f"Error connecting to server: {e}")
             raise
 
     async def process_query(self, query):
@@ -108,8 +104,8 @@ class MCPCompatibleChatbot:
             tools=self.available_tools if self.available_tools else None,
             tool_choice="auto",
         )
-        process_query = True
-        while process_query:
+        is_processing = True
+        while is_processing:
             assistant_message = response.choices[0].message
             # Check if there's text content
             if assistant_message.content:
@@ -171,14 +167,14 @@ class MCPCompatibleChatbot:
                 )
             else:
                 # No tool calls, conversation complete
-                process_query = False
+                is_processing = False
 
     async def get_resource(self, resource_uri):
         session = self.sessions.get(resource_uri)
-        # Fallback for papers URIs - try any papers resource session
-        if not session and resource_uri.startswith("papers://"):
+        # Fallback for reminders URIs - try any reminders resource session
+        if not session and resource_uri.startswith("reminders://"):
             for uri, sess in self.sessions.items():
-                if uri.startswith("papers://"):
+                if uri.startswith("reminders://"):
                     session = sess
                     break
 
@@ -207,7 +203,7 @@ class MCPCompatibleChatbot:
         for prompt in self.available_prompts:
             print(f"- {prompt['name']}: {prompt['description']}")
             if prompt["arguments"]:
-                print(f"  Arguments:")
+                print("  Arguments:")
                 for arg in prompt["arguments"]:
                     arg_name = arg.name if hasattr(arg, "name") else arg.get("name", "")
                     print(f"    - {arg_name}")
@@ -242,12 +238,21 @@ class MCPCompatibleChatbot:
             print(f"Error: {e}")
 
     async def chat_loop(self):
-        print("\nMCP Chatbot Started!")
-        print("Type your queries or 'quit' to exit.")
-        print("Use @folders to see available topics")
-        print("Use @<topic> to search papers in that topic")
-        print("Use /prompts to list available prompts")
-        print("Use /prompt <name> <arg1=value1> to execute a prompt")
+        print("\n" + "=" * 60)
+        print("Calendar Reminder Agent - MCP Chatbot")
+        print("=" * 60)
+        print("\nCommands:")
+        print("  Type your queries or 'quit' to exit")
+        print("  @all       - View all reminders")
+        print("  @upcoming  - View upcoming reminders (next 7 days)")
+        print("  @YYYY-MM-DD - View reminders for a specific date")
+        print("  /prompts   - List available prompts")
+        print("  /prompt <name> <args> - Execute a prompt")
+        print("\nExamples:")
+        print("  'Create a reminder for team meeting tomorrow at 2pm'")
+        print("  'List my reminders for next week'")
+        print("  'Sync my reminders to Google Calendar'")
+        print()
 
         while True:
             try:
@@ -261,11 +266,12 @@ class MCPCompatibleChatbot:
                 # Check for @resource syntax first
                 if query.startswith("@"):
                     # Remove @ sign
-                    topic = query[1:]
-                    if topic == "folders":
-                        resource_uri = "papers://folders"
+                    resource_key = query[1:]
+                    if resource_key in ["all", "upcoming"]:
+                        resource_uri = f"reminders://{resource_key}"
                     else:
-                        resource_uri = f"papers://{topic}"
+                        # Assume it's a date
+                        resource_uri = f"reminders://{resource_key}"
                     await self.get_resource(resource_uri)
                     continue
 
@@ -306,9 +312,9 @@ class MCPCompatibleChatbot:
 
 async def main():
     chatbot_client = MCPCompatibleChatbot(
-        model_name=os.getenv("LLM_MODEL"),
-        api_key=os.getenv("LLM_API_KEY"),
-        base_url=os.getenv("LLM_BASE_URL"),
+        model_name=settings.llm_model,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
     )
     try:
         # the mcp clients and sessions are not initialized using "with"

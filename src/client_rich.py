@@ -19,10 +19,11 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.console import Console
 from rich.markdown import Markdown
+from src.settings import settings
 
 nest_asyncio.apply()
 
-load_dotenv("/Users/phung.pham/Documents/PHUNGPX/LVLM-tutorials/mcp_anthropic/.env")
+load_dotenv()
 
 
 class MCPCompatibleChatbot:
@@ -109,18 +110,14 @@ class MCPCompatibleChatbot:
     async def connect_to_servers(self):
         """Connect to all configured MCP servers."""
         try:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            with open(
-                os.path.join(current_dir, "server_config.json"), mode="r"
-            ) as file:
-                data = json.load(file)
-            servers = data.get("mcpServers", {})
-            for server_name, server_config in servers.items():
-                await self.connect_to_server(server_name, server_config)
+            # Use the reminder server directly
+            server_config = {
+                "command": "uv",
+                "args": ["run", "python", "-m", "src.server"],
+            }
+            await self.connect_to_server("reminder_agent", server_config)
         except Exception as e:
-            self.console.print(
-                f"[bold red]Error loading server configuration: {e}[/bold red]"
-            )
+            self.console.print(f"[bold red]Error connecting to server: {e}[/bold red]")
             raise
 
     async def process_query(self, query):
@@ -226,10 +223,10 @@ class MCPCompatibleChatbot:
 
     async def get_resource(self, resource_uri):
         session = self.sessions.get(resource_uri)
-        # Fallback for papers URIs - try any papers resource session
-        if not session and resource_uri.startswith("papers://"):
+        # Fallback for reminders URIs - try any reminders resource session
+        if not session and resource_uri.startswith("reminders://"):
             for uri, sess in self.sessions.items():
-                if uri.startswith("papers://"):
+                if uri.startswith("reminders://"):
                     session = sess
                     break
 
@@ -344,23 +341,62 @@ class MCPCompatibleChatbot:
         except Exception as e:
             self.console.print(f"[red]Error: {e}[/red]")
 
+    def _should_use_conversational_prompt(self, query: str) -> bool:
+        """Detect if query suggests creating a reminder with guided conversation."""
+        create_keywords = [
+            "create a reminder",
+            "new reminder",
+            "add a reminder",
+            "remind me",
+            "set a reminder",
+            "make a reminder",
+            "schedule a reminder",
+        ]
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in create_keywords)
+
+    def _extract_topic_from_query(self, query: str) -> str:
+        """Extract potential topic from create reminder query."""
+        # Remove common prefixes
+        query_lower = query.lower()
+        for prefix in [
+            "create a reminder for",
+            "create a reminder about",
+            "new reminder for",
+            "remind me about",
+            "remind me to",
+            "set a reminder for",
+        ]:
+            if prefix in query_lower:
+                # Return everything after the prefix
+                return query[query_lower.index(prefix) + len(prefix) :].strip()
+        # If no prefix found, return the whole query
+        return query
+
     async def chat_loop(self):
         # Display welcome message
         welcome_text = """
-[bold cyan]Welcome to MCP Chatbot![/bold cyan]
+[bold cyan]Welcome to Calendar Reminder Agent![/bold cyan]
 
 [bold]Commands:[/bold]
   • Type your queries naturally
-  • [yellow]@folders[/yellow] - See available topics
-  • [yellow]@<topic>[/yellow] - Search papers in that topic
+  • [yellow]@all[/yellow] - View all reminders
+  • [yellow]@upcoming[/yellow] - View upcoming reminders (next 7 days)
+  • [yellow]@YYYY-MM-DD[/yellow] - View reminders for a specific date
   • [yellow]/prompts[/yellow] - List available prompts
   • [yellow]/prompt <name> <arg1=value1>[/yellow] - Execute a prompt
+  • [yellow]/new[/yellow] - Start guided reminder creation
   • [red]quit[/red] - Exit the chatbot
+
+[bold]Examples:[/bold]
+  • "Create a reminder for team meeting tomorrow at 2pm"
+  • "List my reminders for next week"
+  • "Sync my reminders to Google Calendar"
         """
         self.console.print(
             Panel(
                 welcome_text,
-                title="🤖 MCP Chatbot",
+                title="📅 Calendar Reminder Agent",
                 border_style="bright_blue",
                 box=box.DOUBLE,
                 padding=(1, 2),
@@ -388,11 +424,12 @@ class MCPCompatibleChatbot:
                 # Check for @resource syntax first
                 if query.startswith("@"):
                     # Remove @ sign
-                    topic = query[1:]
-                    if topic == "folders":
-                        resource_uri = "papers://folders"
+                    resource_key = query[1:]
+                    if resource_key in ["all", "upcoming"]:
+                        resource_uri = f"reminders://{resource_key}"
                     else:
-                        resource_uri = f"papers://{topic}"
+                        # Assume it's a date
+                        resource_uri = f"reminders://{resource_key}"
                     await self.get_resource(resource_uri)
                     continue
 
@@ -402,6 +439,12 @@ class MCPCompatibleChatbot:
                     command = parts[0].lower()
                     if command == "/prompts":
                         await self.list_prompts()
+                    elif command == "/new":
+                        # Start guided reminder creation
+                        self.console.print(
+                            "\n[cyan]Starting guided reminder creation...[/cyan]\n"
+                        )
+                        await self.execute_prompt("collect_event_details", {})
                     elif command == "/prompt":
                         if len(parts) < 2:
                             self.console.print(
@@ -421,6 +464,15 @@ class MCPCompatibleChatbot:
                         await self.execute_prompt(prompt_name, args)
                     else:
                         self.console.print(f"[red]Unknown command: {command}[/red]")
+                    continue
+
+                # Smart detection: if user wants to create a reminder, use conversational prompt
+                if self._should_use_conversational_prompt(query):
+                    topic = self._extract_topic_from_query(query)
+                    self.console.print(
+                        f"\n[cyan]💡 Starting guided reminder creation for:[/cyan] [bold]{topic}[/bold]\n"
+                    )
+                    await self.execute_prompt("collect_event_details", {"topic": topic})
                     continue
 
                 await self.process_query(query)
@@ -445,9 +497,9 @@ class MCPCompatibleChatbot:
 
 async def main():
     chatbot_client = MCPCompatibleChatbot(
-        model_name=os.getenv("LLM_MODEL"),
-        api_key=os.getenv("LLM_API_KEY"),
-        base_url=os.getenv("LLM_BASE_URL"),
+        model_name=settings.llm_model,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
     )
     try:
         # the mcp clients and sessions are not initialized using "with"

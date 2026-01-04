@@ -1,0 +1,54 @@
+# Calendar Reminder Agent - Environment Configuration Template
+# Copy this file to .env and fill in your values
+
+# ============================================================================
+# LLM Configuration (REQUIRED)
+# ============================================================================
+LLM_MODEL=gpt-4o-mini
+LLM_API_KEY=your_openai_api_key_here
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_TEMPERATURE=0.0
+LLM_MAX_TOKENS=16384
+
+# ============================================================================
+# Google Calendar Configuration (OPTIONAL)
+# ============================================================================
+# Set to true to enable Google Calendar sync
+GOOGLE_CALENDAR_ENABLED=false
+
+# Path to your Google OAuth credentials JSON file
+# Download from: https://console.cloud.google.com/
+GOOGLE_CREDENTIALS_PATH=./credentials.json
+
+# Path where the OAuth token will be stored (auto-generated)
+GOOGLE_TOKEN_PATH=./token.json
+
+# Calendar ID to use (primary = your main calendar)
+GOOGLE_CALENDAR_ID=primary
+
+# ============================================================================
+# Email Notification Configuration (OPTIONAL)
+# ============================================================================
+# Set to true to enable email notifications
+EMAIL_ENABLED=false
+
+# SMTP server settings (Gmail example shown)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+
+# Your email address
+EMAIL_FROM=your-email@gmail.com
+
+# For Gmail: Use an App Password (not your regular password)
+# Generate at: https://myaccount.google.com/apppasswords
+EMAIL_PASSWORD=your-app-password-here
+
+# Use TLS encryption (recommended)
+EMAIL_USE_TLS=true
+
+# ============================================================================
+# Application Settings
+# ============================================================================
+# Directory where reminders will be stored
+SAVE_DIR=reminders
+
