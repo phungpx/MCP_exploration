@@ -1,12 +1,13 @@
 import arxiv
 import json
 import logging
-import os
 import sys
+from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from src.settings import settings
 
-RESEARCH_DIR = settings.research_dir
+# Initialize Path object immediately
+RESEARCH_DIR = Path(settings.research_dir)
 
 mcp = FastMCP("research_server")
 
@@ -22,11 +23,9 @@ logging.basicConfig(
 def search_papers(topic: str, max_results: int = 5) -> list[str]:
     """
     Search for papers on arXiv based on a topic and store their information.
-
     Args:
         topic: The topic to search for
         max_results: Maximum number of results to retrieve (default: 5)
-
     Returns:
         List of paper IDs found in the search
     """
@@ -44,17 +43,20 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
     papers = client.results(search)
 
     # Create directory for this topic
-    path = os.path.join(RESEARCH_DIR, topic.lower().replace(" ", "_"))
-    os.makedirs(path, exist_ok=True)
+    # Pathlib handles path joining with /
+    topic_path = RESEARCH_DIR / topic.lower().replace(" ", "_")
+    topic_path.mkdir(parents=True, exist_ok=True)
 
-    file_path = os.path.join(path, "papers_info.json")
+    file_path = topic_path / "papers_info.json"
 
     # Try to load existing papers info
-    try:
-        with open(file_path, "r") as json_file:
-            papers_info = json.load(json_file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        papers_info = {}
+    papers_info = {}
+    if file_path.exists():
+        try:
+            with file_path.open("r", encoding="utf-8") as json_file:
+                papers_info = json.load(json_file)
+        except json.JSONDecodeError:
+            papers_info = {}
 
     # Process each paper and add to papers_info
     paper_ids = []
@@ -70,7 +72,7 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
         papers_info[paper.get_short_id()] = paper_info
 
     # Save updated papers_info to json file
-    with open(file_path, "w") as json_file:
+    with file_path.open("w", encoding="utf-8") as json_file:
         json.dump(papers_info, json_file, indent=2)
 
     logging.info(f"Results are saved in: {file_path}")
@@ -79,28 +81,32 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
 
 
 @mcp.tool()
-def extract_info(paper_id: str) -> str:
+def extract_paper_content(paper_id: str) -> str:
     """
     Search for information about a specific paper across all topic directories.
-
     Args:
         paper_id: The ID of the paper to look for
-
     Returns:
         JSON string with paper information if found, error message if not found
     """
+    if not RESEARCH_DIR.exists():
+        return f"Research directory {RESEARCH_DIR} does not exist."
 
-    for item in os.listdir(RESEARCH_DIR):
-        item_path = os.path.join(RESEARCH_DIR, item)
-        if os.path.isdir(item_path):
-            file_path = os.path.join(item_path, "papers_info.json")
-            if os.path.isfile(file_path):
+    # iterdir yields Path objects directly
+    for topic_dir in RESEARCH_DIR.iterdir():
+        if topic_dir.is_dir():
+            file_path = topic_dir / "papers_info.json"
+            if file_path.is_file():
                 try:
-                    with open(file_path, "r") as json_file:
+                    with file_path.open(mode="r", encoding="utf-8") as json_file:
                         papers_info = json.load(json_file)
                         if paper_id in papers_info:
-                            return json.dumps(papers_info[paper_id], indent=2)
-                except (FileNotFoundError, json.JSONDecodeError) as e:
+                            return json.dumps(
+                                papers_info[paper_id],
+                                indent=4,
+                                ensure_ascii=False,
+                            )
+                except (json.JSONDecodeError, OSError) as e:
                     logging.error(f"Error reading {file_path}: {str(e)}")
                     continue
 
@@ -111,19 +117,17 @@ def extract_info(paper_id: str) -> str:
 def get_available_folders() -> str:
     """
     List all available topic folders in the papers directory.
-
     This resource provides a simple list of all available topic folders.
     """
     folders = []
 
     # Get all topic directories
-    if os.path.exists(RESEARCH_DIR):
-        for topic_dir in os.listdir(RESEARCH_DIR):
-            topic_path = os.path.join(RESEARCH_DIR, topic_dir)
-            if os.path.isdir(topic_path):
-                papers_file = os.path.join(topic_path, "papers_info.json")
-                if os.path.exists(papers_file):
-                    folders.append(topic_dir)
+    if RESEARCH_DIR.exists():
+        for topic_dir in RESEARCH_DIR.iterdir():
+            if topic_dir.is_dir():
+                papers_file = topic_dir / "papers_info.json"
+                if papers_file.exists():
+                    folders.append(topic_dir.name)
 
     # Create a simple markdown list
     content = "# Available Topics\n\n"
@@ -141,18 +145,17 @@ def get_available_folders() -> str:
 def get_topic_papers(topic: str) -> str:
     """
     Get detailed information about papers on a specific topic.
-
     Args:
         topic: The research topic to retrieve papers for
     """
-    topic_dir = topic.lower().replace(" ", "_")
-    papers_file = os.path.join(RESEARCH_DIR, topic_dir, "papers_info.json")
+    topic_dir_name = topic.lower().replace(" ", "_")
+    papers_file = RESEARCH_DIR / topic_dir_name / "papers_info.json"
 
-    if not os.path.exists(papers_file):
+    if not papers_file.exists():
         return f"# No papers found for topic: {topic}\n\nTry searching for papers on this topic first."
 
     try:
-        with open(papers_file, "r") as f:
+        with papers_file.open("r", encoding="utf-8") as f:
             papers_data = json.load(f)
 
         # Create markdown content with paper details

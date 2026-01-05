@@ -1,5 +1,5 @@
 import asyncio
-from src.clients.agent import main as agent_main
+from src.agent import main as agent_main
 
 
 def main():

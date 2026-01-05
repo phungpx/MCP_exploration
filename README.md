@@ -4,14 +4,19 @@ A powerful research assistant built with the [Model Context Protocol (MCP)](http
 
 ## 🌟 Features
 
+### Core Features
 - **Multi-Server MCP Integration**: Connect to multiple MCP servers simultaneously
 - **Research Capabilities**: Search and analyze academic papers from arXiv
 - **File System Access**: Read and write files through MCP filesystem server
 - **Web Fetching**: Retrieve content from the web using MCP fetch server
 - **Prompts & Resources**: Leverage MCP prompts and resources for enhanced workflows
-- **Rich CLI Interface**: Beautiful terminal interface with markdown rendering
-- **Streaming Responses**: Real-time streaming of AI responses
 - **Conversation History**: Maintains context across multiple interactions
+
+### Interfaces
+- **Rich CLI Interface**: Beautiful terminal interface with markdown rendering and streaming responses
+- **REST API**: Complete REST API for programmatic access
+- **WebSocket API**: Real-time streaming responses via WebSocket
+- **Session Management**: Maintain conversation context across requests
 
 ## 🏗️ Architecture
 
@@ -113,22 +118,39 @@ Application settings are managed through `src/settings.py` using Pydantic Settin
 
 ```
 MCP_exploration/
-├── main.py                      # Entry point
+├── main.py                      # CLI entry point
 ├── pyproject.toml               # Project dependencies
 ├── server_config.json           # MCP servers configuration
 ├── .env                         # Environment variables (not in repo)
+├── README.md                    # This file
+├── README_API.md                # API documentation
+├── scripts/
+│   ├── function_calling.py      # Function calling examples
+│   └── start_api.py             # API server startup script
+├── docs/
+│   ├── API.md                   # Complete API reference
+│   ├── QUICKSTART_API.md        # API quick start guide
+│   ├── ARCHITECTURE.md          # Technical architecture
+│   └── EXAMPLES.md              # Usage examples
+├── tests/
+│   └── test_api.py              # API tests
 └── src/
+    ├── api/
+    │   ├── __init__.py          # API package
+    │   ├── app.py               # FastAPI application
+    │   └── client_example.py    # Example API client
     ├── clients/
-    │   ├── client.py           # MCP client implementation
-    │   └── agent.py            # Pydantic AI agent with CLI
+    │   ├── client.py            # MCP client implementation
+    │   └── agent.py             # Pydantic AI agent with CLI
     ├── servers/
-    │   └── research.py         # Custom research MCP server
-    └── settings.py             # Application settings
+    │   └── research.py          # Custom research MCP server
+    ├── papers/                  # Research papers storage
+    └── settings.py              # Application settings
 ```
 
 ## 🚀 Usage
 
-### Starting the Agent
+### Option 1: CLI Interface
 
 Run the interactive research agent:
 
@@ -139,6 +161,32 @@ uv run python main.py
 # or directly
 uv run src/clients/agent.py
 ```
+
+### Option 2: REST/WebSocket API
+
+Start the API server:
+
+```bash
+# Using the convenience script
+python scripts/start_api.py
+
+# Or using uvicorn directly
+uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Then access:
+- **API**: http://localhost:8000
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+Quick test:
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello!"}'
+```
+
+See [API Documentation](README_API.md) for complete API reference.
 
 ### Interactive Commands
 
@@ -304,5 +352,33 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📚 Additional Documentation
 
+### General
 - **[EXAMPLES.md](docs/EXAMPLES.md)** - Practical usage examples and real-world scenarios
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed technical architecture and design patterns
+
+### API Documentation
+- **[README_API.md](README_API.md)** - API overview and quick start
+- **[API.md](docs/API.md)** - Complete API reference with all endpoints
+- **[QUICKSTART_API.md](docs/QUICKSTART_API.md)** - Step-by-step API setup guide
+
+### Examples
+- **CLI**: Run `uv run src/clients/agent.py`
+- **API**: Run `python src/api/client_example.py` (after starting the API server)
+
+## 🔌 API Endpoints
+
+Quick reference for the REST API:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check and system info |
+| `/chat` | POST | Send message and get response |
+| `/ws/chat/{session_id}` | WebSocket | Streaming chat |
+| `/prompts` | GET | List available prompts |
+| `/prompts/get` | POST | Get specific prompt |
+| `/resources` | GET | List available resources |
+| `/resources/{key}` | GET | Read resource content |
+| `/sessions` | GET | List active sessions |
+| `/sessions/{id}` | DELETE | Delete session |
+
+See [API Documentation](README_API.md) for details.
