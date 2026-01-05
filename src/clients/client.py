@@ -12,7 +12,7 @@ from contextlib import AsyncExitStack
 
 
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -48,9 +48,13 @@ class MCPClient:
 
         for server in self.servers:
             try:
+                logging.info(f"Initializing server: {server.name}")
                 await server.initialize()
                 tools = await server.create_pydantic_ai_tools()
                 self.tools += tools
+                logging.info(
+                    f"Server {server.name} initialized successfully with {len(tools)} tools"
+                )
 
                 # Fetch prompts and resources from each server
                 server_prompts = await server.list_prompts()
@@ -64,7 +68,7 @@ class MCPClient:
                     self.resources[f"{server.name}/{resource.uri}"] = resource
 
             except Exception as e:
-                logging.error(f"Failed to initialize server: {e}")
+                logging.error(f"Failed to initialize server '{server.name}': {e}")
                 await self.cleanup_servers()
                 return []
 

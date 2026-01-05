@@ -4,11 +4,27 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from pydantic_ai import Agent
+from langfuse import get_client
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from src.clients.client import MCPClient
 from src.settings import settings
+
+langfuse = get_client(
+    # secret_key=settings.langfuse.langfuse_secret_key,
+    # public_key=settings.langfuse.langfuse_public_key,
+    # base_url=settings.langfuse.langfuse_base_url,
+)
+
+# Verify connection
+if langfuse.auth_check():
+    print("Langfuse client is authenticated and ready!")
+else:
+    print("Authentication failed. Please check your credentials and host.")
+
+# Initialize Pydantic AI instrumentation
+Agent.instrument_all()
 
 
 def get_model():
@@ -32,7 +48,11 @@ async def get_pydantic_ai_agent():
     client = MCPClient()
     client.load_servers("server_config.json")
     tools = await client.start()
-    return client, Agent(model=get_model(), tools=tools)
+    return client, Agent(
+        model=get_model(),
+        tools=tools,
+        instrument=True,
+    )
 
 
 async def main():

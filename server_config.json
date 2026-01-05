@@ -12,7 +12,9 @@
             "command": "uv",
             "args": [
                 "run",
-                "src/servers/research.py"
+                "python",
+                "-m",
+                "src.servers.research"
             ],
             "cwd": "."
         },

@@ -1,3 +1,4 @@
+import os
 from abc import ABC
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,12 +20,25 @@ class LLMSettings(ProjectBaseSettings):
     llm_max_tokens: int = 16384
 
 
-class ProjectSettings(LLMSettings):
+class LangfuseSettings(ProjectBaseSettings):
+    langfuse_secret_key: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_base_url: str | None = None
+
+
+class ProjectSettings(LLMSettings, LangfuseSettings):
     research_dir: str = "src/papers"
 
     @property
     def llm(self) -> LLMSettings:
         return LLMSettings(**self.model_dump())
 
+    @property
+    def langfuse(self) -> LangfuseSettings:
+        return LangfuseSettings(**self.model_dump())
+
 
 settings = ProjectSettings()
+os.environ["LANGFUSE_PUBLIC_KEY"] = settings.langfuse.langfuse_public_key
+os.environ["LANGFUSE_SECRET_KEY"] = settings.langfuse.langfuse_secret_key
+os.environ["LANGFUSE_BASE_URL"] = settings.langfuse.langfuse_base_url

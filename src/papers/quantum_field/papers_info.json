@@ -1,0 +1,53 @@
+{
+  "2512.10504v2": {
+    "title": "Tianyan: Cloud services with quantum advantage",
+    "authors": [
+      "Tianyan Quantum Group"
+    ],
+    "summary": "Tianyan Quantum Cloud Platform offers cloud services demonstrating quantum advantage capabilities with a Zuchongzhi 3.0-like superconducting quantum processor. This cloud-accessible superconducting quantum prototype, named Tianyan-287, features 105 qubits and achieves high operational fidelities, with single-qubit gates, two-qubit gates, and readout fidelity at 99.90%, 99.56%, 98.7%, respectively. For a specific benchmark task involving random circuit sampling on a 74-qubit system over 24 cycles, the platform completes one million samples in just 18.4 minutes. In contrast, state-of-the-art classical supercomputers would require approximately 16,000 years to complete the equivalent calculation. To facilitate this, the platform provides access via Cqlib, an open-source SDK designed for working with quantum systems at the level of extended quantum circuits, operators, and primitives. The cloud service aims to democratize access to high-performance quantum hardware, enabling the community to validate and explore practical quantum advantages.",
+    "pdf_url": "https://arxiv.org/pdf/2512.10504v2",
+    "published": "2025-12-11"
+  },
+  "2307.02593v2": {
+    "title": "Superpositions of thermalisations in relativistic quantum field theory",
+    "authors": [
+      "Joshua Foo",
+      "Magdalena Zych"
+    ],
+    "summary": "Recent results in relativistic quantum information and quantum thermodynamics have independently shown that in the quantum regime, a system may fail to thermalise when subject to quantum-controlled application of the same, single thermalisation channel. For example, an accelerating system with fixed proper acceleration is known to thermalise to an acceleration-dependent temperature, known as the Unruh temperature. However, the same system in a superposition of spatially translated trajectories that share the same proper acceleration fails to thermalise. Here, we provide an explanation of these results using the framework of quantum field theory in relativistic noninertial reference frames. We show how a probe that accelerates in a superposition of spatial translations interacts with incommensurate sets of field modes. In special cases where the modes are orthogonal (for example, when the Rindler wedges are translated in a direction orthogonal to the plane of motion), thermalisation does indeed result, corroborating the here provided explanation. We then discuss how this description relates to an information-theoretic approach aimed at studying quantum aspects of temperature through quantum-controlled thermalisations. The present work draws a connection between research in quantum information, relativistic physics, and quantum thermodynamics, in particular showing that relativistic quantum effects can provide a natural realisation of quantum thermodynamical scenarios.",
+    "pdf_url": "https://arxiv.org/pdf/2307.02593v2",
+    "published": "2023-07-05"
+  },
+  "1409.5893v2": {
+    "title": "Fast evaluation of far-field signals for time-domain wave propagation",
+    "authors": [
+      "Scott E. Field",
+      "Stephen R. Lau"
+    ],
+    "summary": "Time-domain simulation of wave phenomena on a finite computational domain often requires a fictitious outer boundary. An important practical issue is the specification of appropriate boundary conditions on this boundary, often conditions of complete transparency. Attention to this issue has been paid elsewhere, and here we consider a different, although related, issue: far-field signal recovery. Namely, from smooth data recorded on the outer boundary we wish to recover the far-field signal which would reach arbitrarily large distances. These signals encode information about interior scatterers and often correspond to actual measurements. This article expresses far-field signal recovery in terms of time-domain convolutions, each between a solution multipole moment recorded at the boundary and a sum-of-exponentials kernel. Each exponential corresponds to a pole term in the Laplace transform of the kernel, a finite sum of simple poles. Greengard, Hagstrom, and Jiang have derived the large-$\\ell$ (spherical-harmonic index) asymptotic expansion for the pole residues, and their analysis shows that, when expressed in terms of the exact sum-of-exponentials, large-$\\ell$ signal recovery is plagued by cancellation errors. Nevertheless, through an alternative integral representation of the kernel and its subsequent approximation by a {\\em smaller} number of exponential terms (kernel compression), we are able to alleviate these errors and achieve accurate signal recovery. We empirically examine scaling relations between the parameters which determine a compressed kernel, and perform numerical tests of signal \"teleportation\" from one radial value $r_1$ to another $r_2$, including the case $r_2=\\infty$. We conclude with a brief discussion on application to other hyperbolic equations posed on non-flat geometries where waves undergo backscatter.",
+    "pdf_url": "https://arxiv.org/pdf/1409.5893v2",
+    "published": "2014-09-20"
+  },
+  "2112.04501v3": {
+    "title": "Achieving the quantum field theory limit in far-from-equilibrium quantum link models",
+    "authors": [
+      "Jad C. Halimeh",
+      "Maarten Van Damme",
+      "Torsten V. Zache",
+      "Debasish Banerjee",
+      "Philipp Hauke"
+    ],
+    "summary": "Realizations of gauge theories in setups of quantum synthetic matter open up the possibility of probing salient exotic phenomena in condensed matter and high-energy physics, along with potential applications in quantum information and science technologies. In light of the impressive ongoing efforts to achieve such realizations, a fundamental question regarding quantum link model regularizations of lattice gauge theories is how faithfully they capture the quantum field theory limit of gauge theories. Recent work [Zache, Van Damme, Halimeh, Hauke, and Banerjee, at https://journals.aps.org/prd/abstract/10.1103/PhysRevD.106.L091502 has shown through analytic derivations, exact diagonalization, and infinite matrix product state calculations that the low-energy physics of $1+1$D $\\mathrm{U}(1)$ quantum link models approaches the quantum field theory limit already at small link spin length $S$. Here, we show that the approach to this limit also lends itself to the far-from-equilibrium quench dynamics of lattice gauge theories, as demonstrated by our numerical simulations of the Loschmidt return rate and the chiral condensate in infinite matrix product states, which work directly in the thermodynamic limit. Similar to our findings in equilibrium that show a distinct behavior between half-integer and integer link spin lengths, we find that criticality emerging in the Loschmidt return rate is fundamentally different between half-integer and integer spin quantum link models in the regime of strong electric-field coupling. Our results further affirm that state-of-the-art finite-size ultracold-atom and NISQ-device implementations of quantum link lattice gauge theories have the real potential to simulate their quantum field theory limit even in the far-from-equilibrium regime.",
+    "pdf_url": "https://arxiv.org/pdf/2112.04501v3",
+    "published": "2021-12-08"
+  },
+  "physics/0604089v3": {
+    "title": "Space-time transformation properties of inter-charge forces and dipole radiation: Breakdown of the classical field concept in relativistic electrodynamics",
+    "authors": [
+      "J. H. Field"
+    ],
+    "summary": "A detailed study is made of the space-time transformation properties of intercharge forces and the associated electric and magnetic force fields, both in classical electrodynamics and in a recently developed relativistic classical electrodynamical theory. Important differences are found and serious errors are found in the traditional treatment of special-relativistic effects in classical electromagnetism. Fields associated with radiation processes are also considered and classical and quantum mechanical predictions are compared. An important, though trivial, mathematical error in the derivation of the retarded Li\u00e9nard-Wiechert retarded potentials is pointed out. It is also shown why electric and magnetic fields produced by moving source charges or current distributions are not `classical fields', and that they do not, in general, constitute an antisymmetic second-rank tensor, as is usually assumed.",
+    "pdf_url": "https://arxiv.org/pdf/physics/0604089v3",
+    "published": "2006-04-11"
+  }
+}

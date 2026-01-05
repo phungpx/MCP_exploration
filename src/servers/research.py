@@ -1,12 +1,21 @@
 import arxiv
 import json
+import logging
 import os
+import sys
 from mcp.server.fastmcp import FastMCP
 from src.settings import settings
 
 RESEARCH_DIR = settings.research_dir
 
 mcp = FastMCP("research_server")
+
+# Configure logging to stderr to avoid interfering with JSON-RPC on stdout
+logging.basicConfig(
+    stream=sys.stderr,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 
 @mcp.tool()
@@ -64,7 +73,7 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
     with open(file_path, "w") as json_file:
         json.dump(papers_info, json_file, indent=2)
 
-    print(f"Results are saved in: {file_path}")
+    logging.info(f"Results are saved in: {file_path}")
 
     return paper_ids
 
@@ -92,7 +101,7 @@ def extract_info(paper_id: str) -> str:
                         if paper_id in papers_info:
                             return json.dumps(papers_info[paper_id], indent=2)
                 except (FileNotFoundError, json.JSONDecodeError) as e:
-                    print(f"Error reading {file_path}: {str(e)}")
+                    logging.error(f"Error reading {file_path}: {str(e)}")
                     continue
 
     return f"There's no saved information related to paper {paper_id}."
