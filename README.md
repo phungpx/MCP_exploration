@@ -123,25 +123,14 @@ MCP_exploration/
 ├── server_config.json           # MCP servers configuration
 ├── .env                         # Environment variables (not in repo)
 ├── README.md                    # This file
-├── README_API.md                # API documentation
-├── scripts/
-│   ├── function_calling.py      # Function calling examples
-│   └── start_api.py             # API server startup script
 ├── docs/
-│   ├── API.md                   # Complete API reference
-│   ├── QUICKSTART_API.md        # API quick start guide
 │   ├── ARCHITECTURE.md          # Technical architecture
 │   └── EXAMPLES.md              # Usage examples
 ├── tests/
 │   └── test_api.py              # API tests
 └── src/
-    ├── api/
-    │   ├── __init__.py          # API package
-    │   ├── app.py               # FastAPI application
-    │   └── client_example.py    # Example API client
-    ├── clients/
-    │   ├── client.py            # MCP client implementation
-    │   └── agent.py             # Pydantic AI agent with CLI
+    ├── client.py                # MCP client implementation
+    └── agent.py                 # Pydantic AI agent with CLI
     ├── servers/
     │   └── research.py          # Custom research MCP server
     ├── papers/                  # Research papers storage
@@ -356,14 +345,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - **[EXAMPLES.md](docs/EXAMPLES.md)** - Practical usage examples and real-world scenarios
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed technical architecture and design patterns
 
-### API Documentation
-- **[README_API.md](README_API.md)** - API overview and quick start
-- **[API.md](docs/API.md)** - Complete API reference with all endpoints
-- **[QUICKSTART_API.md](docs/QUICKSTART_API.md)** - Step-by-step API setup guide
-
 ### Examples
-- **CLI**: Run `uv run src/clients/agent.py`
-- **API**: Run `python src/api/client_example.py` (after starting the API server)
+- **CLI**: Run `uv run src/agent.py`
 
 ## 🔌 API Endpoints
 
