@@ -1,6 +1,6 @@
+import uuid
 import asyncio
 import argparse
-import uuid
 from rich.live import Live
 from rich.console import Console
 from rich.markdown import Markdown
