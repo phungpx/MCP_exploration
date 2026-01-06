@@ -21,7 +21,7 @@ async def run_client():
     server_params = StdioServerParameters(
         command=sys.executable,  # Use the same Python interpreter as the client
         args=["server.py"],  # Name of your server file
-        cwd="/Users/phung.pham/Documents/PHUNGPX/MCP_exploration/scripts/sampling",
+        # cwd="scripts/sampling",
     )
 
     # 3. Define the OpenAI Sampling Handler
@@ -33,11 +33,13 @@ async def run_client():
         # Convert MCP SamplingMessages to OpenAI Chat format
         openai_messages = []
         for msg in params.messages:
-            openai_messages.append({"role": msg.role, "content": msg.content.text})
+            openai_messages.append(
+                {"role": msg.role, "content": msg.content.text},
+            )
 
         # Call OpenAI API
         response = await llm_client.chat.completions.create(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.0-flash",
             messages=openai_messages,
             max_tokens=params.maxTokens or 150,
         )
