@@ -21,8 +21,7 @@ logging.basicConfig(
 
 @mcp.tool()
 def search_papers(topic: str, max_results: int = 5) -> list[str]:
-    """
-    Search for papers on arXiv based on a topic and store their information.
+    """Search for papers on arXiv based on a topic and store their information.
     Args:
         topic: The topic to search for
         max_results: Maximum number of results to retrieve (default: 5)
@@ -82,8 +81,7 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
 
 @mcp.tool()
 def extract_paper_content(paper_id: str) -> str:
-    """
-    Search for information about a specific paper across all topic directories.
+    """Search for information about a specific paper across all topic directories.
     Args:
         paper_id: The ID of the paper to look for
     Returns:
@@ -113,12 +111,10 @@ def extract_paper_content(paper_id: str) -> str:
     return f"There's no saved information related to paper {paper_id}."
 
 
+# Directed Resource
 @mcp.resource("papers://folders")
 def get_available_folders() -> str:
-    """
-    List all available topic folders in the papers directory.
-    This resource provides a simple list of all available topic folders.
-    """
+    """List all available topic folders in the papers directory. This resource provides a simple list of all available topic folders."""
     folders = []
 
     # Get all topic directories
@@ -141,10 +137,10 @@ def get_available_folders() -> str:
     return content
 
 
+# Templated Resource
 @mcp.resource("papers://{topic}")
 def get_topic_papers(topic: str) -> str:
-    """
-    Get detailed information about papers on a specific topic.
+    """Get detailed information about papers on a specific topic.
     Args:
         topic: The research topic to retrieve papers for
     """
@@ -155,7 +151,7 @@ def get_topic_papers(topic: str) -> str:
         return f"# No papers found for topic: {topic}\n\nTry searching for papers on this topic first."
 
     try:
-        with papers_file.open("r", encoding="utf-8") as f:
+        with papers_file.open(mode="r", encoding="utf-8") as f:
             papers_data = json.load(f)
 
         # Create markdown content with paper details
@@ -170,8 +166,8 @@ def get_topic_papers(topic: str) -> str:
             content += (
                 f"- **PDF URL**: [{paper_info['pdf_url']}]({paper_info['pdf_url']})\n\n"
             )
-            content += f"### Summary\n{paper_info['summary'][:500]}...\n\n"
-            content += "---\n\n"
+            content += f"### Summary\n{paper_info['summary'][:500]}...\n"
+            content += "----------\n"
 
         return content
     except json.JSONDecodeError:

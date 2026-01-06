@@ -5,7 +5,9 @@ from rich.live import Live
 from rich.console import Console
 from rich.markdown import Markdown
 
+from mcp import ClientSession
 from langfuse import get_client
+from typing import Optional
 
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
@@ -36,6 +38,80 @@ def get_pydantic_llm_model():
             max_tokens=settings.llm.llm_max_tokens,
         ),
     )
+
+
+async def get_prompts(available_prompts: Optional[list[dict]] = None):
+    if not available_prompts:
+        print("No prompts available.")
+        return
+
+    print("\nAvailable prompts:")
+    for prompt in available_prompts:
+        print(f"- {prompt['name']}: {prompt['description']}")
+        if prompt["arguments"]:
+            print("\tArguments:")
+            for arg in prompt["arguments"]:
+                arg_name = arg.name if hasattr(arg, "name") else arg.get("name", "")
+                print(f"\t\t-{arg_name}")
+
+
+async def execute_prompt(
+    sessions: dict[str, ClientSession],
+    prompt_name: str,
+    args: dict,
+):
+    session = sessions.get(prompt_name)
+    if not session:
+        print(f"Prompt '{prompt_name}' not found.")
+        return
+
+    try:
+        result = await session.get_prompt(prompt_name, arguments=args)
+        if result and result.messages:
+            prompt_content = result.messages[0].content
+
+            # Extract text from content (handles different formats)
+            if isinstance(prompt_content, str):
+                text = prompt_content
+            elif hasattr(prompt_content, "text"):
+                text = prompt_content.text
+            else:
+                # Handle list of content items
+                text = " ".join(
+                    item.text if hasattr(item, "text") else str(item)
+                    for item in prompt_content
+                )
+            print(f"\nExecuting prompt '{prompt_name}'...")
+            # await execute_query(console, orchestrator, text, messages)
+            print(text)
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+async def get_resource(sessions: dict[str, ClientSession], resource_uri: str):
+    session = sessions.get(resource_uri)
+
+    # Fallback for papers URIs - try any papers resource session
+    if not session and resource_uri.startswith("papers://"):
+        for resounce_uri, _session in sessions.items():
+            if resounce_uri.startswith("papers://"):
+                session = _session
+                break
+
+    if not session:
+        print(f"Resource '{resource_uri}' not found.")
+        return
+
+    try:
+        result = await session.read_resource(uri=resource_uri)
+        if result and result.contents:
+            print(f"\nResource: {resource_uri}")
+            print("Content:")
+            print(result.contents[0].text)
+        else:
+            print("No content available.")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 async def init_agent():
@@ -103,6 +179,41 @@ async def main():
 
                 console.print("\n[bold blue][Assistant][/bold blue]")
 
+                # Check for @resource syntax first
+                if user_input.startswith("@"):
+                    topic = user_input[1:]  # Remove @ sign
+                    if topic == "folders":
+                        resource_uri = "papers://folders"
+                    else:
+                        resource_uri = f"papers://{topic}"
+                    await get_resource(mcp_client.sessions, resource_uri)
+                    continue
+
+                # Check for /command syntax
+                if user_input.startswith("/"):
+                    parts = user_input.split()
+                    command = parts[0].lower()
+                    if command == "/prompts":
+                        await get_prompts(mcp_client.list_prompts)
+                    elif command == "/prompt":
+                        if len(parts) < 2:
+                            print("Usage: /prompt <name> <arg1=value1> <arg2=value2>")
+                            continue
+
+                        prompt_name = parts[1]
+                        args = {}
+
+                        # Parse arguments
+                        for arg in parts[2:]:
+                            if "=" in arg:
+                                key, value = arg.split("=", 1)
+                                args[key] = value
+
+                        await execute_prompt(mcp_client.sessions, prompt_name, args)
+                    else:
+                        print(f"Unknown command: {command}")
+                    continue
+
                 with Live(
                     "",
                     console=console,
@@ -113,7 +224,6 @@ async def main():
                     async with mcp_agent.run_stream(
                         user_input,
                         message_history=messages,
-                        # If your pydantic-ai version supports run_context or similar metadata:
                         # run_context={"user_id": user_id, "session_id": session_id}
                     ) as result:
                         response_text = ""

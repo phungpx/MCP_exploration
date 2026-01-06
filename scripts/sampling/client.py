@@ -47,7 +47,10 @@ async def run_client():
         # Send the result back to the MCP Server
         return CreateMessageResult(
             role="assistant",
-            content=TextContent(type="text", text=response.choices[0].message.content),
+            content=TextContent(
+                type="text",
+                text=response.choices[0].message.content,
+            ),
             model=os.getenv("LLM_MODEL"),
         )
 
