@@ -1,24 +1,22 @@
 import uuid
 import asyncio
 import argparse
+from typing import Any
+
 from rich.live import Live
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 
-from mcp import ClientSession
 from langfuse import get_client
-from typing import Optional
-
 from pydantic_ai import Agent
-from pydantic_ai.settings import ModelSettings
-from pydantic_ai.tools import Tool as PydanticTool
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.settings import ModelSettings
 
 from src.client import MCPClient
 from src.settings import settings
 
-# Initialize Langfuse
 langfuse = get_client()
 if not langfuse.auth_check():
     print("Warning: Langfuse authentication failed.")
@@ -26,7 +24,127 @@ if not langfuse.auth_check():
 Agent.instrument_all()
 
 
-def get_pydantic_llm_model():
+class ChatSession:
+    def __init__(self, user_id: str, session_id: str, client: MCPClient, agent: Agent):
+        self.user_id = user_id
+        self.session_id = session_id
+        self.client = client
+        self.agent = agent
+        self.messages = []
+        self.console = Console()
+
+    async def handle_input(self, user_input: str) -> bool:
+        """Processes user input. Returns False if the session should end."""
+        user_input = user_input.strip()
+
+        if user_input.lower() in ["exit", "quit"]:
+            return False
+
+        if user_input.startswith("/"):
+            await self._handle_command(user_input)
+        elif user_input.startswith("@"):
+            await self._handle_resource(user_input)
+        else:
+            await self._chat_completion(user_input)
+
+        return True
+
+    async def _chat_completion(self, user_input: str):
+        self.console.print("\n[bold blue]Assistant[/bold blue]")
+        with Live("", console=self.console, vertical_overflow="visible") as live:
+            async with self.agent.run_stream(
+                user_input, message_history=self.messages
+            ) as result:
+                response_text = ""
+                async for message in result.stream_text(delta=True):
+                    response_text += message
+                    live.update(Markdown(response_text))
+
+                self.messages.extend(result.all_messages())
+
+    async def _handle_command(self, user_input: str):
+        parts = user_input.split()
+        cmd = parts[0].lower()
+
+        if cmd == "/prompts":
+            await self._list_prompts()
+        elif cmd == "/prompt":
+            if len(parts) < 2:
+                self.console.print("[yellow]Usage: /prompt <name> key=value[/yellow]")
+                return
+
+            prompt_name = parts[1]
+            kwargs = dict(arg.split("=", 1) for arg in parts[2:] if "=" in arg)
+            await self._execute_mcp_prompt(prompt_name, kwargs)
+        else:
+            self.console.print(f"[red]Unknown command: {cmd}[/red]")
+
+    async def _handle_resource(self, user_input: str):
+        topic = user_input[1:]
+        # Mapping logic (simplified)
+        resource_uri = "papers://folders" if topic == "folders" else f"papers://{topic}"
+
+        # Strategy: Find session that supports this URI
+        session = self.client.sessions.get(resource_uri)
+        if not session and resource_uri.startswith("papers://"):
+            session = next(
+                (
+                    _session
+                    for _resource_uri, _session in self.client.sessions.items()
+                    if _resource_uri.startswith("papers://")
+                ),
+                None,
+            )
+
+        if not session:
+            self.console.print(f"[red]Resource '{resource_uri}' not found.[/red]")
+            return
+
+        try:
+            result = await session.read_resource(uri=resource_uri)
+            content = "\n".join([c.text for c in result.contents if hasattr(c, "text")])
+            self.console.print(
+                Panel(content, title=f"Resource: {resource_uri}", border_style="cyan")
+            )
+        except Exception as e:
+            self.console.print(f"[red]Error reading resource: {e}[/red]")
+
+    async def _list_prompts(self):
+        if not self.client.list_prompts:
+            self.console.print("[yellow]No prompts available.[/yellow]")
+            return
+
+        self.console.print("\n[bold]Available Prompts:[/bold]")
+        for prompt in self.client.list_prompts:
+            self.console.print(
+                f"• [cyan]{prompt['name']}[/cyan] ({', '.join(prompt['arguments'].keys())}): {prompt.get('description', 'No description')}"
+            )
+
+    async def _execute_mcp_prompt(self, name: str, args: dict):
+        session = self.client.sessions.get(name)
+        if not session:
+            self.console.print(f"[red]No session found for prompt: {name}[/red]")
+            return
+
+        result = await session.get_prompt(name, arguments=args)
+        # Extract text using a more robust helper
+        text = self._extract_text(result.messages[0].content)
+        self.console.print(Panel(text, title=f"Prompt: {name}"))
+
+    @staticmethod
+    def _extract_text(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if hasattr(content, "text"):
+            return content.text
+        if isinstance(content, list):
+            return " ".join(
+                item.text if hasattr(item, "text") else str(item) for item in content
+            )
+        return str(content)
+
+
+def get_model():
     return OpenAIChatModel(
         model_name=settings.llm.llm_model,
         provider=OpenAIProvider(
@@ -40,209 +158,45 @@ def get_pydantic_llm_model():
     )
 
 
-async def get_prompts(available_prompts: Optional[list[dict]] = None):
-    if not available_prompts:
-        print("No prompts available.")
-        return
-
-    print("\nAvailable prompts:")
-    for prompt in available_prompts:
-        print(f"- {prompt['name']}: {prompt['description']}")
-        if prompt["arguments"]:
-            print("\tArguments:")
-            for arg in prompt["arguments"]:
-                arg_name = arg.name if hasattr(arg, "name") else arg.get("name", "")
-                print(f"\t\t-{arg_name}")
-
-
-async def execute_prompt(
-    sessions: dict[str, ClientSession],
-    prompt_name: str,
-    args: dict,
-):
-    session = sessions.get(prompt_name)
-    if not session:
-        print(f"Prompt '{prompt_name}' not found.")
-        return
-
-    try:
-        result = await session.get_prompt(prompt_name, arguments=args)
-        if result and result.messages:
-            prompt_content = result.messages[0].content
-
-            # Extract text from content (handles different formats)
-            if isinstance(prompt_content, str):
-                text = prompt_content
-            elif hasattr(prompt_content, "text"):
-                text = prompt_content.text
-            else:
-                # Handle list of content items
-                text = " ".join(
-                    item.text if hasattr(item, "text") else str(item)
-                    for item in prompt_content
-                )
-            print(f"\nExecuting prompt '{prompt_name}'...")
-            # await execute_query(console, orchestrator, text, messages)
-            print(text)
-    except Exception as e:
-        print(f"Error: {e}")
-
-
-async def get_resource(sessions: dict[str, ClientSession], resource_uri: str):
-    session = sessions.get(resource_uri)
-
-    # Fallback for papers URIs - try any papers resource session
-    if not session and resource_uri.startswith("papers://"):
-        for resounce_uri, _session in sessions.items():
-            if resounce_uri.startswith("papers://"):
-                session = _session
-                break
-
-    if not session:
-        print(f"Resource '{resource_uri}' not found.")
-        return
-
-    try:
-        result = await session.read_resource(uri=resource_uri)
-        if result and result.contents:
-            print(f"\nResource: {resource_uri}")
-            print("Content:")
-            print(result.contents[0].text)
-        else:
-            print("No content available.")
-    except Exception as e:
-        print(f"Error: {e}")
-
-
-async def init_agent():
-    """Initialize Client and Agent."""
+async def init_system():
     client = MCPClient(config_path="server_config.json")
     await client.connect_to_servers()
 
-    pydantic_model: OpenAIChatModel = get_pydantic_llm_model()
-    # Note: Ensure client.list_tools is a list or property returning a list
-    pydantic_tools: list[PydanticTool] = client.list_tools
-
     agent = Agent(
-        model=pydantic_model,
-        tools=pydantic_tools,
-        instrument=True,  # langfuse observability
+        model=get_model(),
+        tools=client.list_tools,
+        instrument=True,
     )
     return client, agent
 
 
-def parse_arguments():
-    """Parse command line arguments for session and user configuration."""
-    parser = argparse.ArgumentParser(description="MCP Agent CLI Chat")
-
-    parser.add_argument(
-        "--user-id",
-        type=str,
-        default="default_user",
-        help="The ID of the user interacting with the agent.",
-    )
-
-    parser.add_argument(
-        "--session-id",
-        type=str,
-        default=None,
-        help="The Session ID for tracking. If not provided, a UUID will be generated.",
-    )
-
-    return parser.parse_args()
-
-
 async def main():
-    # 1. Configuration & Setup
-    args = parse_arguments()
-    user_id = args.user_id
-    session_id = args.session_id or str(uuid.uuid4())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user-id", default="default_user")
+    parser.add_argument("--session-id", default=str(uuid.uuid4()))
+    args = parser.parse_args()
 
-    console = Console()
-    console.print(f"⏳ [bold]Initializing MCP Client and Agent...[/bold]")
-    console.print(f"👤 [cyan]User ID:[/cyan] {user_id}")
-    console.print(f"🆔 [cyan]Session ID:[/cyan] {session_id}")
+    client, agent = await init_system()
+    chat = ChatSession(args.user_id, args.session_id, client, agent)
 
-    # 2. Initialize Agent
-    mcp_client, mcp_agent = await init_agent()
-
-    messages = []
+    chat.console.print(
+        Panel(
+            f"User: {args.user_id}\nSession: {args.session_id}",
+            title="MCP Agent Online",
+            border_style="green",
+        )
+    )
 
     try:
         while True:
-            try:
-                user_input = console.input("\n[bold green]You:[/bold green] ")
-
-                if user_input.lower() in ["exit", "quit"]:
-                    console.print("[bold red]Goodbye![/bold red]")
-                    break
-
-                console.print("\n[bold blue][Assistant][/bold blue]")
-
-                # Check for @resource syntax first
-                if user_input.startswith("@"):
-                    topic = user_input[1:]  # Remove @ sign
-                    if topic == "folders":
-                        resource_uri = "papers://folders"
-                    else:
-                        resource_uri = f"papers://{topic}"
-                    await get_resource(mcp_client.sessions, resource_uri)
-                    continue
-
-                # Check for /command syntax
-                if user_input.startswith("/"):
-                    parts = user_input.split()
-                    command = parts[0].lower()
-                    if command == "/prompts":
-                        await get_prompts(mcp_client.list_prompts)
-                    elif command == "/prompt":
-                        if len(parts) < 2:
-                            print("Usage: /prompt <name> <arg1=value1> <arg2=value2>")
-                            continue
-
-                        prompt_name = parts[1]
-                        args = {}
-
-                        # Parse arguments
-                        for arg in parts[2:]:
-                            if "=" in arg:
-                                key, value = arg.split("=", 1)
-                                args[key] = value
-
-                        await execute_prompt(mcp_client.sessions, prompt_name, args)
-                    else:
-                        print(f"Unknown command: {command}")
-                    continue
-
-                with Live(
-                    "",
-                    console=console,
-                    vertical_overflow="visible",
-                    refresh_per_second=15,
-                ) as live:
-                    # Run the agent stream
-                    async with mcp_agent.run_stream(
-                        user_input,
-                        message_history=messages,
-                        # run_context={"user_id": user_id, "session_id": session_id}
-                    ) as result:
-                        response_text = ""
-                        async for message in result.stream_text(delta=True):
-                            response_text += message
-                            live.update(Markdown(response_text))
-
-                        messages.extend(result.all_messages())
-
-            except KeyboardInterrupt:
-                console.print(
-                    "\n[yellow]KeyboardInterrupt detected. Type 'exit' to quit.[/yellow]"
-                )
-                continue
-            except Exception as e:
-                console.print(f"[bold red]Error:[/bold red] {e}")
-
+            user_input = chat.console.input("\n[bold green]You:[/bold green] ")
+            should_continue = await chat.handle_input(user_input)
+            if not should_continue:
+                break
+    except KeyboardInterrupt:
+        chat.console.print("\n[yellow]Interrupted. Exiting...[/yellow]")
     finally:
-        await mcp_client.cleanup()
+        await client.cleanup()
 
 
 if __name__ == "__main__":
