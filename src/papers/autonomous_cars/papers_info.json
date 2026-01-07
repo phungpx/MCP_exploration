@@ -1,0 +1,56 @@
+{
+  "1908.00732v1": {
+    "title": "Road Context-aware Intrusion Detection System for Autonomous Cars",
+    "authors": [
+      "Jingxuan Jiang",
+      "Chundong Wang",
+      "Sudipta Chattopadhyay",
+      "Wei Zhang"
+    ],
+    "summary": "Security is of primary importance to vehicles. The viability of performing remote intrusions onto the in-vehicle network has been manifested. In regard to unmanned autonomous cars, limited work has been done to detect intrusions for them while existing intrusion detection systems (IDSs) embrace limitations against strong adversaries. In this paper, we consider the very nature of autonomous car and leverage the road context to build a novel IDS, named Road context-aware IDS (RAIDS). When a computer-controlled car is driving through continuous roads, road contexts and genuine frames transmitted on the car's in-vehicle network should resemble a regular and intelligible pattern. RAIDS hence employs a lightweight machine learning model to extract road contexts from sensory information (e.g., camera images and distance sensor values) that are used to generate control signals for maneuvering the car. With such ongoing road context, RAIDS validates corresponding frames observed on the in-vehicle network. Anomalous frames that substantially deviate from road context will be discerned as intrusions. We have implemented a prototype of RAIDS with neural networks, and conducted experiments on a Raspberry Pi with extensive datasets and meaningful intrusion cases. Evaluations show that RAIDS significantly outperforms state-of-the-art IDS without using road context by up to 99.9% accuracy and short response time.",
+    "pdf_url": "https://arxiv.org/pdf/1908.00732v1",
+    "published": "2019-08-02"
+  },
+  "2112.14706v2": {
+    "title": "Intersection focused Situation Coverage-based Verification and Validation Framework for Autonomous Vehicles Implemented in CARLA",
+    "authors": [
+      "Zaid Tahir",
+      "Rob Alexander"
+    ],
+    "summary": "Autonomous Vehicles (AVs) i.e., self-driving cars, operate in a safety critical domain, since errors in the autonomous driving software can lead to huge losses. Statistically, road intersections which are a part of the AVs operational design domain (ODD), have some of the highest accident rates. Hence, testing AVs to the limits on road intersections and assuring their safety on road intersections is pertinent, and thus the focus of this paper. We present a situation coverage-based (SitCov) AV-testing framework for the verification and validation (V&V) and safety assurance of AVs, developed in an open-source AV simulator named CARLA. The SitCov AV-testing framework focuses on vehicle-to-vehicle interaction on a road intersection under different environmental and intersection configuration situations, using situation coverage criteria for automatic test suite generation for safety assurance of AVs. We have developed an ontology for intersection situations, and used it to generate a situation hyperspace i.e., the space of all possible situations arising from that ontology. For the evaluation of our SitCov AV-testing framework, we have seeded multiple faults in our ego AV, and compared situation coverage based and random situation generation. We have found that both generation methodologies trigger around the same number of seeded faults, but the situation coverage-based generation tells us a lot more about the weaknesses of the autonomous driving algorithm of our ego AV, especially in edge-cases. Our code is publicly available online, anyone can use our SitCov AV-testing framework and use it or build further on top of it. This paper aims to contribute to the domain of V&V and development of AVs, not only from a theoretical point of view, but also from the viewpoint of an open-source software contribution and releasing a flexible/effective tool for V&V and development of AVs.",
+    "pdf_url": "https://arxiv.org/pdf/2112.14706v2",
+    "published": "2021-12-24"
+  },
+  "2201.02601v1": {
+    "title": "Apples and Cars: a Comparison of Security",
+    "authors": [
+      "Zhendong Ma"
+    ],
+    "summary": "Cybersecurity has gained importance for cars that increasingly rely on software and networks. \"Smartphone on wheels\" is often used as an analogy to highlight the need for security. As a high-value target of cyberattacks, modern smartphones implement layers of protection. Automotive embedded systems share many similarities with smartphones. We compare the security architecture of an iPhone and a car to identify gaps and discuss the potentials for the cars of the future.",
+    "pdf_url": "https://arxiv.org/pdf/2201.02601v1",
+    "published": "2022-01-07"
+  },
+  "1704.02532v1": {
+    "title": "Deep Reinforcement Learning framework for Autonomous Driving",
+    "authors": [
+      "Ahmad El Sallab",
+      "Mohammed Abdou",
+      "Etienne Perot",
+      "Senthil Yogamani"
+    ],
+    "summary": "Reinforcement learning is considered to be a strong AI paradigm which can be used to teach machines through interaction with the environment and learning from their mistakes. Despite its perceived utility, it has not yet been successfully applied in automotive applications. Motivated by the successful demonstrations of learning of Atari games and Go by Google DeepMind, we propose a framework for autonomous driving using deep reinforcement learning. This is of particular relevance as it is difficult to pose autonomous driving as a supervised learning problem due to strong interactions with the environment including other vehicles, pedestrians and roadworks. As it is a relatively new area of research for autonomous driving, we provide a short overview of deep reinforcement learning and then describe our proposed framework. It incorporates Recurrent Neural Networks for information integration, enabling the car to handle partially observable scenarios. It also integrates the recent work on attention models to focus on relevant information, thereby reducing the computational complexity for deployment on embedded hardware. The framework was tested in an open source 3D car racing simulator called TORCS. Our simulation results demonstrate learning of autonomous maneuvering in a scenario of complex road curvatures and simple interaction of other vehicles.",
+    "pdf_url": "https://arxiv.org/pdf/1704.02532v1",
+    "published": "2017-04-08"
+  },
+  "2011.08729v3": {
+    "title": "Control Strategies for Autonomous Vehicles",
+    "authors": [
+      "Chinmay Vilas Samak",
+      "Tanmay Vilas Samak",
+      "Sivanathan Kandhasamy"
+    ],
+    "summary": "This chapter focuses on the self-driving technology from a control perspective and investigates the control strategies used in autonomous vehicles and advanced driver-assistance systems from both theoretical and practical viewpoints. First, we introduce the self-driving technology as a whole, including perception, planning and control techniques required for accomplishing the challenging task of autonomous driving. We then dwell upon each of these operations to explain their role in the autonomous system architecture, with a prime focus on control strategies. The core portion of this chapter commences with detailed mathematical modeling of autonomous vehicles followed by a comprehensive discussion on control strategies. The chapter covers longitudinal as well as lateral control strategies for autonomous vehicles with coupled and de-coupled control schemes. We as well discuss some of the machine learning techniques applied to autonomous vehicle control task. Finally, we briefly summarize some of the research works that our team has carried out at the Autonomous Systems Lab and conclude the chapter with a few thoughtful remarks.",
+    "pdf_url": "https://arxiv.org/pdf/2011.08729v3",
+    "published": "2020-11-17"
+  }
+}
