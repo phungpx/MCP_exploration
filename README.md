@@ -90,6 +90,12 @@ Edit `server_config.json` to configure your MCP servers:
 }
 ```
 
+MCP Inspector
+
+```bash
+npx @modelcontextprotocol/inspector python -m src.servers.research
+```
+
 ### Settings
 
 Application settings are managed through `src/settings.py` using Pydantic Settings:

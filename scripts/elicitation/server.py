@@ -6,7 +6,6 @@ like OAuth flows, credential collection, or payment processing.
 """
 
 import uuid
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -25,30 +24,6 @@ class BookingPreferences(BaseModel):
     alternativeDate: str = Field(
         default="2024-12-26",
         description="Alternative date (YYYY-MM-DD)",
-    )
-
-
-class UserProfileUpdate(BaseModel):
-    """Schema for collecting user profile updates."""
-
-    full_name: str = Field(description="Your full name")
-    email: str = Field(description="Your email address")
-    phone: Optional[str] = Field(
-        default=None, description="Your phone number (optional)"
-    )
-    notifications_enabled: bool = Field(
-        default=True, description="Do you want to receive notifications?"
-    )
-
-
-class FeedbackForm(BaseModel):
-    """Schema for collecting user feedback."""
-
-    rating: int = Field(description="Rating from 1-5", ge=1, le=5)
-    comments: str = Field(description="Your feedback comments")
-    recommend: bool = Field(description="Would you recommend this service?")
-    contact_me: bool = Field(
-        default=False, description="Can we contact you about your feedback?"
     )
 
 
@@ -126,3 +101,7 @@ async def connect_service(service_name: str, ctx: Context[ServerSession, None]) 
             )
         ]
     )
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
