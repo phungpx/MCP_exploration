@@ -2,21 +2,6 @@
 
 A powerful research assistant built with the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and [Pydantic AI](https://ai.pydantic.dev/). This project demonstrates how to integrate multiple MCP servers with an AI agent to create an intelligent research tool that can search academic papers, access file systems, and fetch web content.
 
-## 🌟 Features
-
-### Core Features
-- **Multi-Server MCP Integration**: Connect to multiple MCP servers simultaneously
-- **Research Capabilities**: Search and analyze academic papers from arXiv
-- **File System Access**: Read and write files through MCP filesystem server
-- **Web Fetching**: Retrieve content from the web using MCP fetch server
-- **Prompts & Resources**: Leverage MCP prompts and resources for enhanced workflows
-- **Conversation History**: Maintains context across multiple interactions
-
-### Interfaces
-- **Rich CLI Interface**: Beautiful terminal interface with markdown rendering and streaming responses
-- **REST API**: Complete REST API for programmatic access
-- **WebSocket API**: Real-time streaming responses via WebSocket
-- **Session Management**: Maintain conversation context across requests
 
 ## 🏗️ Architecture
 
@@ -59,7 +44,7 @@ A powerful research assistant built with the [Model Context Protocol (MCP)](http
 
 1. **Clone the repository**:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/phungpx/MCP_exploration.git
 cd MCP_exploration
 ```
 
@@ -70,15 +55,13 @@ uv sync
 
 3. **Create a `.env` file** with your LLM configuration:
 ```bash
-# LLM Configuration
-LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=your-api-key-here
-LLM_BASE_URL=https://api.openai.com/v1  # Optional, for custom endpoints
-LLM_TEMPERATURE=0.0
-LLM_MAX_TOKENS=16384
+LLM_MODEL=gemini-2.5-flash
+LLM_API_KEY=
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 
-# Research Directory
-RESEARCH_DIR=src/papers
+LANGFUSE_SECRET_KEY=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_BASE_URL=
 ```
 
 ## ⚙️ Configuration
@@ -139,8 +122,6 @@ MCP_exploration/
 
 ## 🚀 Usage
 
-### Option 1: CLI Interface
-
 Run the interactive research agent:
 
 ```bash
@@ -150,32 +131,6 @@ uv run python main.py
 # or directly
 uv run src/clients/agent.py
 ```
-
-### Option 2: REST/WebSocket API
-
-Start the API server:
-
-```bash
-# Using the convenience script
-python scripts/start_api.py
-
-# Or using uvicorn directly
-uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Then access:
-- **API**: http://localhost:8000
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-Quick test:
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello!"}'
-```
-
-See [API Documentation](README_API.md) for complete API reference.
 
 ### Interactive Commands
 
@@ -260,36 +215,6 @@ Fetches content from the web.
 - `fetch(url)`: Fetch content from a URL
 - And more...
 
-## 💡 Use Cases
-
-### Academic Research
-```
-Search for 5 papers on transformer architectures and summarize their key contributions
-```
-
-### Research with Resources
-```
-/read-resource research/papers://folders
-Tell me more about the papers in the machine_learning folder
-```
-
-### Using Prompts
-```
-/use-prompt research/generate_search_prompt
-```
-Then copy the prompt and customize it for your research needs.
-
-### File Operations
-```
-Read the file at ./data/notes.txt and summarize it
-Write these research findings to ./results/summary.md
-```
-
-### Web Research
-```
-Fetch the content from https://arxiv.org/abs/2301.00001 and summarize it
-```
-
 ## 🔧 Development
 
 ### Creating Custom MCP Servers
@@ -325,43 +250,3 @@ if __name__ == "__main__":
 1. Add server configuration to `server_config.json`
 2. The client will automatically discover tools, prompts, and resources
 3. Restart the agent to load the new server
-
-## 📚 Key Dependencies
-
-- **[mcp](https://pypi.org/project/mcp/)**: Model Context Protocol SDK
-- **[pydantic-ai](https://ai.pydantic.dev/)**: Type-safe AI agent framework
-- **[arxiv](https://pypi.org/project/arxiv/)**: Python wrapper for arXiv API
-- **[rich](https://rich.readthedocs.io/)**: Beautiful terminal formatting
-- **[openai](https://platform.openai.com/docs/)**: OpenAI API client
-- **[pydantic](https://docs.pydantic.dev/)**: Data validation and settings
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📚 Additional Documentation
-
-### General
-- **[EXAMPLES.md](docs/EXAMPLES.md)** - Practical usage examples and real-world scenarios
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed technical architecture and design patterns
-
-### Examples
-- **CLI**: Run `uv run src/agent.py`
-
-## 🔌 API Endpoints
-
-Quick reference for the REST API:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check and system info |
-| `/chat` | POST | Send message and get response |
-| `/ws/chat/{session_id}` | WebSocket | Streaming chat |
-| `/prompts` | GET | List available prompts |
-| `/prompts/get` | POST | Get specific prompt |
-| `/resources` | GET | List available resources |
-| `/resources/{key}` | GET | Read resource content |
-| `/sessions` | GET | List active sessions |
-| `/sessions/{id}` | DELETE | Delete session |
-
-See [API Documentation](README_API.md) for details.
