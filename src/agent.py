@@ -116,8 +116,11 @@ class ChatSession:
 
         self.console.print("\n[bold]Available Prompts:[/bold]")
         for prompt in self.client.list_prompts:
+            args = [arg.name for arg in prompt.get("arguments", [])]
+            des = prompt.get("description", "")
+            name = prompt.get("name", "")
             self.console.print(
-                f"• [cyan]{prompt['name']}[/cyan] ({', '.join(prompt['arguments'].keys())}): {prompt.get('description', 'No description')}"
+                f"• [cyan]{name}[/cyan] (args: {', '.join(args)}): {des}"
             )
 
     async def _execute_mcp_prompt(self, name: str, args: dict):
