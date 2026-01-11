@@ -139,10 +139,6 @@ MCP_exploration/
 ├── .env                         # Environment variables (not in repo)
 ├── README.md                    # This file
 ├── docs/
-│   ├── ARCHITECTURE.md          # Technical architecture
-│   └── EXAMPLES.md              # Usage examples
-├── tests/
-│   └── test_api.py              # API tests
 └── src/
     ├── client.py                # MCP client implementation
     └── agent.py                 # Pydantic AI agent with CLI
