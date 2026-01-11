@@ -23,6 +23,20 @@
             "args": [
                 "mcp-server-fetch"
             ]
+        },
+        "git": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-git",
+                "--repository",
+                ".git"
+            ]
+        },
+        "time": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-time"
+            ]
         }
     }
 }

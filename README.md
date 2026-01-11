@@ -90,10 +90,36 @@ Edit `server_config.json` to configure your MCP servers:
 }
 ```
 
-MCP Inspector
+### MCP Inspector
+
+1. research servers
 
 ```bash
 npx @modelcontextprotocol/inspector python -m src.servers.research
+```
+
+2. [`fetch` server](https://github.com/modelcontextprotocol/servers/tree/main/src/fetch)
+
+```bash
+npx @modelcontextprotocol/inspector uvx mcp-server-fetch
+```
+
+3. [`file system` server](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)
+
+```bash
+npx @modelcontextprotocol/inspector npx -y @modelcontextprotocol/server-filesystem <directory-path>
+```
+
+4. [`git` server](https://github.com/modelcontextprotocol/servers/tree/main/src/git)
+
+```bash
+npx @modelcontextprotocol/inspector uvx mcp-server-git --repository .git
+```
+
+5. [`time` server](https://github.com/modelcontextprotocol/servers/tree/main/src/time)
+
+```bash
+npx @modelcontextprotocol/inspector uvx mcp-server-time
 ```
 
 ### Settings
