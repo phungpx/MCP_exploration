@@ -122,6 +122,12 @@ npx @modelcontextprotocol/inspector uvx mcp-server-git --repository .git
 npx @modelcontextprotocol/inspector uvx mcp-server-time
 ```
 
+6. [`squential-thinking` server](https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking)
+
+```bash
+npx @modelcontextprotocol/inspector npx -y @modelcontextprotocol/server-sequential-thinking
+```
+
 ### Settings
 
 Application settings are managed through `src/settings.py` using Pydantic Settings:

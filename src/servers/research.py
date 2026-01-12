@@ -52,7 +52,7 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
     papers_info = {}
     if file_path.exists():
         try:
-            with file_path.open("r", encoding="utf-8") as json_file:
+            with file_path.open(mode="r", encoding="utf-8") as json_file:
                 papers_info = json.load(json_file)
         except json.JSONDecodeError:
             papers_info = {}
@@ -71,8 +71,8 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
         papers_info[paper.get_short_id()] = paper_info
 
     # Save updated papers_info to json file
-    with file_path.open("w", encoding="utf-8") as json_file:
-        json.dump(papers_info, json_file, indent=2)
+    with file_path.open(mode="w", encoding="utf-8") as json_file:
+        json.dump(papers_info, json_file, indent=4, ensure_ascii=False)
 
     logging.info(f"Results are saved in: {file_path}")
 
@@ -100,9 +100,7 @@ def extract_paper_content(paper_id: str) -> str:
                         papers_info = json.load(json_file)
                         if paper_id in papers_info:
                             return json.dumps(
-                                papers_info[paper_id],
-                                indent=4,
-                                ensure_ascii=False,
+                                papers_info[paper_id], indent=4, ensure_ascii=False
                             )
                 except (json.JSONDecodeError, OSError) as e:
                     logging.error(f"Error reading {file_path}: {str(e)}")
@@ -112,7 +110,7 @@ def extract_paper_content(paper_id: str) -> str:
 
 
 # Directed Resource
-@mcp.resource("papers://folders")
+@mcp.resource("papers://folders", mime_type="text/markdown")
 def get_available_folders() -> str:
     """List all available topic folders in the papers directory. This resource provides a simple list of all available topic folders."""
     folders = []
@@ -138,7 +136,7 @@ def get_available_folders() -> str:
 
 
 # Templated Resource
-@mcp.resource("papers://{topic}")
+@mcp.resource("papers://{topic}", mime_type="text/markdown")
 def get_topic_papers(topic: str) -> str:
     """Get detailed information about papers on a specific topic.
     Args:
