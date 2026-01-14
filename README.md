@@ -75,16 +75,48 @@ Edit `server_config.json` to configure your MCP servers:
     "mcpServers": {
         "filesystem": {
             "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "."
+            ]
         },
         "research": {
             "command": "uv",
-            "args": ["run", "src/servers/research.py"],
+            "args": [
+                "run",
+                "python",
+                "-m",
+                "src.servers.research"
+            ],
             "cwd": "."
         },
         "fetch": {
             "command": "uvx",
-            "args": ["mcp-server-fetch"]
+            "args": [
+                "mcp-server-fetch"
+            ]
+        },
+        "git": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-git",
+                "--repository",
+                ".git"
+            ]
+        },
+        "time": {
+            "command": "uvx",
+            "args": [
+                "mcp-server-time"
+            ]
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
         }
     }
 }
