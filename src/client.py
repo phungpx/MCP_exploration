@@ -12,6 +12,7 @@ from mcp import ClientSession, StdioServerParameters
 
 from pydantic_ai.tools import ToolDefinition
 from pydantic_ai import RunContext, Tool as PydanticTool
+from mcp.types import LoggingMessageNotificationParams
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +20,20 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
+
+
+async def logging_callback(params: LoggingMessageNotificationParams):
+    print(params.data)
+
+
+async def print_progress_callback(
+    progress: float, total: float | None, message: str | None
+):
+    if total is not None:
+        percentage = (progress / total) * 100
+        print(f"Progress: {progress}/{total} ({percentage:.1f}%)")
+    else:
+        print(f"Progress: {progress}")
 
 
 class MCPClient:
@@ -48,7 +63,7 @@ class MCPClient:
             )
             read, write = stdio_transport
             session = await self.exit_stack.enter_async_context(
-                ClientSession(read, write)
+                ClientSession(read, write, logging_callback=logging_callback)
             )
             await session.initialize()
 
@@ -110,7 +125,11 @@ class MCPClient:
         async def execute_tool(_ctx: RunContext, **kwargs: Any) -> Any:
             if not session:
                 raise RuntimeError(f"Session for tool {tool.name} not found")
-            result = await session.call_tool(tool.name, arguments=kwargs)
+            result = await session.call_tool(
+                tool.name,
+                arguments=kwargs,
+                progress_callback=print_progress_callback,
+            )
             return result
 
         async def prepare_tool(

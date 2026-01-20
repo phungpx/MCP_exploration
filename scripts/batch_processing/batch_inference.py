@@ -1,51 +1,17 @@
 import boto3
 import json
 import time
-import logging
 import os
 from datetime import datetime
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass
+from typing import List, Dict, Optional
+from loguru import logger
+from typing import Tuple
 from urllib.parse import urlparse
-
-# Configure Logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-
-# --- Configuration & Constants ---
-
-
-@dataclass
-class ModelPricing:
-    """Pricing per 1M tokens (USD)"""
-
-    input_ondemand: float
-    output_ondemand: float
-    # Batch is typically 50% of on-demand price
-    input_batch: float
-    output_batch: float
-
-
-# Pricing Reference (Example: Claude 3 Haiku)
-PRICING_REGISTRY = {
-    "anthropic.claude-3-haiku-20240307-v1:0": ModelPricing(0.25, 1.25, 0.125, 0.625),
-    "anthropic.claude-3-sonnet-20240229-v1:0": ModelPricing(3.00, 15.00, 1.50, 7.50),
-    "anthropic.claude-3-5-sonnet-20240620-v1:0": ModelPricing(3.00, 15.00, 1.50, 7.50),
-    # Default fallback (placeholder)
-    "default": ModelPricing(1.0, 1.0, 0.5, 0.5),
-}
-
-# --- Utilities ---
 
 
 class S3Utils:
-    """Helper for S3 operations"""
-
-    def __init__(self, session: boto3.Session):
-        self.s3_client = session.client("s3")
+    def __init__(self, session: boto3.Session, region_name: str = "us-east-1"):
+        self.s3_client = session.client("s3", region_name=region_name)
 
     @staticmethod
     def parse_s3_uri(s3_uri: str) -> Tuple[str, str]:
@@ -76,51 +42,18 @@ class S3Utils:
             raise
 
 
-class CostAnalyzer:
-    """Handles cost estimation and comparison"""
-
-    @staticmethod
-    def calculate_savings(
-        model_id: str, input_tokens: int, output_tokens: int
-    ) -> Dict[str, float]:
-        pricing = PRICING_REGISTRY.get(model_id, PRICING_REGISTRY["default"])
-
-        # Calculate Costs
-        ondemand_cost = (input_tokens / 1_000_000 * pricing.input_ondemand) + (
-            output_tokens / 1_000_000 * pricing.output_ondemand
-        )
-
-        batch_cost = (input_tokens / 1_000_000 * pricing.input_batch) + (
-            output_tokens / 1_000_000 * pricing.output_batch
-        )
-
-        savings = ondemand_cost - batch_cost
-        savings_pct = (savings / ondemand_cost * 100) if ondemand_cost > 0 else 0
-
-        return {
-            "batch_cost": round(batch_cost, 4),
-            "ondemand_cost": round(ondemand_cost, 4),
-            "savings": round(savings, 4),
-            "savings_pct": round(savings_pct, 2),
-        }
-
-
 class BedrockBatchManager:
-    """Core logic for managing Bedrock Batch Inference"""
-
     def __init__(
         self, region_name: str = "us-east-1", profile_name: Optional[str] = None
     ):
         session = boto3.Session(profile_name=profile_name, region_name=region_name)
         self.bedrock = session.client("bedrock")
-        self.s3_utils = S3Utils(session)
+        self.s3_utils = S3Utils(session, region_name=region_name)
         self.region = region_name
 
     def prepare_jsonl(self, prompts: List[Dict], output_file: str) -> str:
-        """Creates the JSONL input file formatted for Anthropic models"""
-        with open(output_file, "w") as f:
+        with open(file=output_file, mode="w") as f:
             for i, item in enumerate(prompts):
-                # Construct Payload for Claude 3
                 record = {
                     "recordId": item.get("id", f"record_{i:06d}"),
                     "modelInput": {
@@ -135,7 +68,6 @@ class BedrockBatchManager:
                     },
                 }
                 f.write(json.dumps(record) + "\n")
-
         logger.info(f"Generated input file: {output_file} ({len(prompts)} records)")
         return output_file
 
@@ -147,7 +79,6 @@ class BedrockBatchManager:
         output_s3_uri: str,
         role_arn: str,
     ) -> str:
-        """Submits a batch inference job"""
         try:
             response = self.bedrock.create_model_invocation_job(
                 roleArn=role_arn,
@@ -183,7 +114,6 @@ class BedrockBatchManager:
             time.sleep(poll_interval)
 
     def process_results(self, job_response: Dict) -> None:
-        """Downloads manifest and prints analysis"""
         if job_response["status"] != "Completed":
             logger.warning("Job did not complete successfully. Skipping analysis.")
             return
@@ -212,60 +142,21 @@ class BedrockBatchManager:
         try:
             logger.info(f"Attempting to download manifest from: {manifest_s3_uri}")
             self.s3_utils.download_file(manifest_s3_uri, local_manifest_path)
-
-            with open(local_manifest_path, "r") as f:
-                manifest_data = json.load(f)
-
-            self._print_report(manifest_data, job_response.get("modelId"))
-
         except Exception as e:
             logger.error(f"Could not retrieve or parse manifest: {e}")
             logger.info("Tip: Verify the output S3 path structure manually.")
 
-    def _print_report(self, manifest: Dict, model_id: str):
-        stats = {
-            "total": manifest.get("inputRecordsCount", 0),
-            "success": manifest.get("successfulRecordsCount", 0),
-            "failed": manifest.get("failedRecordsCount", 0),
-            "in_tok": manifest.get("totalInputTokenCount", 0),
-            "out_tok": manifest.get("totalOutputTokenCount", 0),
-        }
-
-        financials = CostAnalyzer.calculate_savings(
-            model_id, stats["in_tok"], stats["out_tok"]
-        )
-
-        print("\n" + "=" * 50)
-        print(f"📊 BATCH INFERENCE REPORT: {model_id}")
-        print("=" * 50)
-        print(
-            f"Records: {stats['success']}/{stats['total']} (Failed: {stats['failed']})"
-        )
-        print(f"Tokens:  In: {stats['in_tok']:,} | Out: {stats['out_tok']:,}")
-        print("-" * 50)
-        print(f"💰 Cost (Batch):      ${financials['batch_cost']:.4f}")
-        print(f"💰 Cost (On-Demand):  ${financials['ondemand_cost']:.4f}")
-        print(
-            f"💵 SAVINGS:           ${financials['savings']:.4f} ({financials['savings_pct']}%)"
-        )
-        print("=" * 50 + "\n")
-
-
-# --- Main Execution ---
-
 
 def main():
-    # --- 1. User Settings ---
-    REGION = "us-east-1"
-    MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
-    ROLE_ARN = "arn:aws:iam::YOUR_ACCOUNT_ID:role/BedrockBatchInferenceRole"
-    BUCKET = "your-s3-bucket-name"
-    PREFIX = "batch-tests"
+    REGION = "ap-southeast-1"
+    MODEL_ID = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
+    ROLE_ARN = "arn:aws:iam::061051247257:role/AmazonBedrockServiceRole-c6alv2tvqgyh0n-3qurb3xkdy6pif"
+    BUCKET = "ptp-dev-aidata-bronze"
+    PREFIX = "lk_conversational_simulation/batch-inference"
 
     # Initialize Manager
     manager = BedrockBatchManager(region_name=REGION)
 
-    # --- 2. Create Dummy Data ---
     prompts = [
         {
             "id": f"req_{i}",
@@ -281,10 +172,12 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     input_s3_key = f"{PREFIX}/{timestamp}/input.jsonl"
     input_uri = f"s3://{BUCKET}/{input_s3_key}"
-    output_uri = f"s3://{BUCKET}/{PREFIX}/{timestamp}/output"
+    # Bedrock requires the s3Uri for outputDataConfig to end with a trailing "/"
+    # and point to a prefix (folder), not a specific object.
+    output_uri = f"s3://{BUCKET}/{PREFIX}/{timestamp}/output/"
 
     # NOTE: Commented out to prevent accidental execution without valid credentials
-    # manager.s3_utils.upload_file(local_input, input_uri)
+    manager.s3_utils.upload_file(local_input, input_uri)
 
     print("\n--- Dry Run Configuration ---")
     print(f"Model: {MODEL_ID}")
@@ -292,10 +185,18 @@ def main():
     print(f"Output: {output_uri}")
 
     # --- 4. Submit & Monitor (Uncomment to run) ---
-    # job_name = f"batch-job-{timestamp}"
-    # job_arn = manager.submit_job(job_name, MODEL_ID, input_uri, output_uri, ROLE_ARN)
-    # job_result = manager.wait_for_job(job_arn)
-    # manager.process_results(job_result)
+    job_name = f"batch-job-{timestamp}"
+    job_arn = manager.submit_job(job_name, MODEL_ID, input_uri, output_uri, ROLE_ARN)
+    job_result = manager.wait_for_job(job_arn)
+
+    # Export job_result to a JSON file for later inspection
+    os.makedirs("results", exist_ok=True)
+    job_result_path = f"results/{job_name}_result.json"
+    with open(job_result_path, "w") as f:
+        json.dump(job_result, f, indent=2, default=str)
+    logger.info(f"Saved job_result to {job_result_path}")
+
+    manager.process_results(job_result)
 
 
 if __name__ == "__main__":

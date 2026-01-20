@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Context
 from src.settings import settings
 
 # Initialize Path object immediately
@@ -20,7 +20,9 @@ logging.basicConfig(
 
 
 @mcp.tool()
-def search_papers(topic: str, max_results: int = 5) -> list[str]:
+async def search_papers(
+    topic: str, max_results: int = 5, ctx: Context[None, None] = None
+) -> list[str]:
     """Search for papers on arXiv based on a topic and store their information.
     Args:
         topic: The topic to search for
@@ -29,9 +31,12 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
         List of paper IDs found in the search
     """
 
+    await ctx.info(
+        f"[Paper Searching] Searching for {max_results} papers on topic: {topic}"
+    )
+    await ctx.report_progress(50, 100, "Searching for papers")
     # Use arxiv to find the papers
     client = arxiv.Client()
-
     # Search for the most relevant articles matching the queried topic
     search = arxiv.Search(
         query=topic,
@@ -41,6 +46,8 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
 
     papers = client.results(search)
 
+    await ctx.info(f"[Paper Searching] Postprocessing papers for topic: {topic}")
+    await ctx.report_progress(75, 100, "Postprocessing papers")
     # Create directory for this topic
     # Pathlib handles path joining with /
     topic_path = RESEARCH_DIR / topic.lower().replace(" ", "_")
@@ -70,6 +77,8 @@ def search_papers(topic: str, max_results: int = 5) -> list[str]:
         }
         papers_info[paper.get_short_id()] = paper_info
 
+    await ctx.info(f"[Paper Searching] Saving papers for topic: {topic}")
+    await ctx.report_progress(100, 100, f"Saving papers for topic: {topic}")
     # Save updated papers_info to json file
     with file_path.open(mode="w", encoding="utf-8") as json_file:
         json.dump(papers_info, json_file, indent=4, ensure_ascii=False)
