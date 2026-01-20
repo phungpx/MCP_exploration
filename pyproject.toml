@@ -5,10 +5,13 @@ description = "Research Agent with MCP"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiobotocore>=3.1.0",
     "arxiv>=2.3.1",
     "dotenv>=0.9.9",
     "fastapi>=0.115.0",
+    "httpx>=0.27.0",
     "langfuse>=3.11.2",
+    "loguru>=0.7.3",
     "mcp>=1.25.0",
     "nest-asyncio>=1.6.0",
     "openai>=2.14.0",

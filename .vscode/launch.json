@@ -21,6 +21,15 @@
             "console": "integratedTerminal",
             "args": [],
             "justMyCode": false
+        },
+        {
+            "name": "batch_inference.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/batch_processing/batch_inference.py",
+            "console": "integratedTerminal",
+            "args": [],
+            "justMyCode": false
         }
     ]
 }
