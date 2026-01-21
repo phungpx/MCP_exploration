@@ -31,9 +31,9 @@ async def print_progress_callback(
 ):
     if total is not None:
         percentage = (progress / total) * 100
-        print(f"Progress: {progress}/{total} ({percentage:.1f}%)")
+        print(f"Progress: {percentage:.1f}% | {message}")
     else:
-        print(f"Progress: {progress}")
+        print(f"Progress: {progress} | {message}")
 
 
 class MCPClient:

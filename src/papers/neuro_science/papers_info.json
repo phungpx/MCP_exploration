@@ -1,0 +1,85 @@
+{
+    "2512.16152v1": {
+        "title": "Pulsar Science with the SKA Observatory",
+        "authors": [
+            "Bhal Chandra Joshi",
+            "Aris Karastergiou",
+            "Marta Burgay",
+            "The SKA pulsar science working group"
+        ],
+        "summary": "The large instantaneous sensitivity, a wide frequency coverage and flexible observation modes with large number of beams in the sky are the main features of the SKA observatory's two telescopes, the SKA-Low and the SKA-Mid, which are located on two different continents. Owing to these capabilities, the SKAO telescopes are going to be a game-changer for radio astronomy in general and pulsar astronomy in particular. The eleven articles in this special issue on pulsar science with the SKA Observatory describe its impact on different areas of pulsar science. In this lead article, a brief description of the two telescopes highlighting the relevant features for pulsar science is presented followed by an overview of each accompanying article, exploring the inter-relationship between different pulsar science use cases.",
+        "pdf_url": "https://arxiv.org/pdf/2512.16152v1",
+        "published": "2025-12-18"
+    },
+    "1211.0310v1": {
+        "title": "Large Synoptic Survey Telescope: Dark Energy Science Collaboration",
+        "authors": [
+            "LSST Dark Energy Science Collaboration"
+        ],
+        "summary": "This white paper describes the LSST Dark Energy Science Collaboration (DESC), whose goal is the study of dark energy and related topics in fundamental physics with data from the Large Synoptic Survey Telescope (LSST). It provides an overview of dark energy science and describes the current and anticipated state of the field. It makes the case for the DESC by laying out a robust analytical framework for dark energy science that has been defined by its members and the comprehensive three-year work plan they have developed for implementing that framework. The analysis working groups cover five key probes of dark energy: weak lensing, large scale structure, galaxy clusters, Type Ia supernovae, and strong lensing. The computing working groups span cosmological simulations, galaxy catalogs, photon simulations and a systematic software and computational framework for LSST dark energy data analysis. The technical working groups make the connection between dark energy science and the LSST system. The working groups have close linkages, especially through the use of the photon simulations to study the impact of instrument design and survey strategy on analysis methodology and cosmological parameter estimation. The white paper describes several high priority tasks identified by each of the 16 working groups. Over the next three years these tasks will help prepare for LSST analysis, make synergistic connections with ongoing cosmological surveys and provide the dark energy community with state of the art analysis tools. Members of the community are invited to join the LSST DESC, according to the membership policies described in the white paper. Applications to sign up for associate membership may be made by submitting the Web form at http://www.slac.stanford.edu/exp/lsst/desc/signup.html with a short statement of the work they wish to pursue that is relevant to the LSST DESC.",
+        "pdf_url": "https://arxiv.org/pdf/1211.0310v1",
+        "published": "2012-11-01"
+    },
+    "2509.02918v1": {
+        "title": "Single Domain Generalization in Diabetic Retinopathy: A Neuro-Symbolic Learning Approach",
+        "authors": [
+            "Midhat Urooj",
+            "Ayan Banerjee",
+            "Farhat Shaikh",
+            "Kuntal Thakur",
+            "Sandeep Gupta"
+        ],
+        "summary": "Domain generalization remains a critical challenge in medical imaging, where models trained on single sources often fail under real-world distribution shifts. We propose KG-DG, a neuro-symbolic framework for diabetic retinopathy (DR) classification that integrates vision transformers with expert-guided symbolic reasoning to enable robust generalization across unseen domains. Our approach leverages clinical lesion ontologies through structured, rule-based features and retinal vessel segmentation, fusing them with deep visual representations via a confidence-weighted integration strategy. The framework addresses both single-domain generalization (SDG) and multi-domain generalization (MDG) by minimizing the KL divergence between domain embeddings, thereby enforcing alignment of high-level clinical semantics. Extensive experiments across four public datasets (APTOS, EyePACS, Messidor-1, Messidor-2) demonstrate significant improvements: up to a 5.2% accuracy gain in cross-domain settings and a 6% improvement over baseline ViT models. Notably, our symbolic-only model achieves a 63.67% average accuracy in MDG, while the complete neuro-symbolic integration achieves the highest accuracy compared to existing published baselines and benchmarks in challenging SDG scenarios. Ablation studies reveal that lesion-based features (84.65% accuracy) substantially outperform purely neural approaches, confirming that symbolic components act as effective regularizers beyond merely enhancing interpretability. Our findings establish neuro-symbolic integration as a promising paradigm for building clinically robust, and domain-invariant medical AI systems.",
+        "pdf_url": "https://arxiv.org/pdf/2509.02918v1",
+        "published": "2025-09-03"
+    },
+    "2304.08104v2": {
+        "title": "GREX-PLUS Science Book",
+        "authors": [
+            "GREX-PLUS Science Team",
+            ":",
+            "Akio K. Inoue",
+            "Yuichi Harikane",
+            "Takashi Moriya",
+            "Hideko Nomura",
+            "Shunsuke Baba",
+            "Yuka Fujii",
+            "Naoteru Gouda",
+            "Yasuhiro Hirahara",
+            "Yui Kawashima",
+            "Tadayuki Kodama",
+            "Yusei Koyama",
+            "Hiroyuki Kurokawa",
+            "Taro Matsuo",
+            "Yoshiki Matsuoka",
+            "Shuji Matsuura",
+            "Ken Mawatari",
+            "Toru Misawa",
+            "Kentaro Nagamine",
+            "Kimihiko Nakajima",
+            "Shota Notsu",
+            "Takafumi Ootsubo",
+            "Kazumasa Ohno",
+            "Hideo Sagawa",
+            "Takashi Shimonishi",
+            "Ken-ichi Tadaki",
+            "Michihiro Takami",
+            "Tsuyoshi Terai",
+            "Yoshiki Toba",
+            "Takuji Yamashita",
+            "Chikako Yasui"
+        ],
+        "summary": "GREX-PLUS (Galaxy Reionization EXplorer and PLanetary Universe Spectrometer) is a mission candidate for a JAXA's strategic L-class mission to be launched in the 2030s. Its primary sciences are two-fold: galaxy formation and evolution and planetary system formation and evolution. The GREX-PLUS spacecraft will carry a 1.2 m primary mirror aperture telescope cooled down to 50 K. The two science instruments will be onboard: a wide-field camera in the 2-8 $μ$m wavelength band and a high resolution spectrometer with a wavelength resolution of 30,000 in the 10-18 $μ$m band. The GREX-PLUS wide-field camera aims to detect the first generation of galaxies at redshift $z>15$. The GREX-PLUS high resolution spectrometer aims to identify the location of the water ``snow line'' in proto-planetary disks. Both instruments will provide unique data sets for a broad range of scientific topics including galaxy mass assembly, origin of supermassive blackholes, infrared background radiation, molecular spectroscopy in the interstellar medium, transit spectroscopy for exoplanet atmosphere, planetary atmosphere in the Solar system, and so on.",
+        "pdf_url": "https://arxiv.org/pdf/2304.08104v2",
+        "published": "2023-04-17"
+    },
+    "2003.04962v1": {
+        "title": "Science with the X-ray Imaging and Spectroscopy Mission (XRISM)",
+        "authors": [
+            "XRISM Science Team"
+        ],
+        "summary": "This white paper was prepared by members of the XRISM Science Team for the benefit of the general astronomical community. This paper describes the capabilities of XRISM, offers a sampling of the many science topics that the mission will address, and discusses the synergies of XRISM with the plethora of planned and existing facilities in the 2020s and beyond.",
+        "pdf_url": "https://arxiv.org/pdf/2003.04962v1",
+        "published": "2020-03-10"
+    }
+}

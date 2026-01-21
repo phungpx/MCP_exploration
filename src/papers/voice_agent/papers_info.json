@@ -1,0 +1,61 @@
+{
+    "2203.08975v2": {
+        "title": "A Survey of Multi-Agent Deep Reinforcement Learning with Communication",
+        "authors": [
+            "Changxi Zhu",
+            "Mehdi Dastani",
+            "Shihan Wang"
+        ],
+        "summary": "Communication is an effective mechanism for coordinating the behaviors of multiple agents, broadening their views of the environment, and to support their collaborations. In the field of multi-agent deep reinforcement learning (MADRL), agents can improve the overall learning performance and achieve their objectives by communication. Agents can communicate various types of messages, either to all agents or to specific agent groups, or conditioned on specific constraints. With the growing body of research work in MADRL with communication (Comm-MADRL), there is a lack of a systematic and structural approach to distinguish and classify existing Comm-MADRL approaches. In this paper, we survey recent works in the Comm-MADRL field and consider various aspects of communication that can play a role in designing and developing multi-agent reinforcement learning systems. With these aspects in mind, we propose 9 dimensions along which Comm-MADRL approaches can be analyzed, developed, and compared. By projecting existing works into the multi-dimensional space, we discover interesting trends. We also propose some novel directions for designing future Comm-MADRL systems through exploring possible combinations of the dimensions.",
+        "pdf_url": "https://arxiv.org/pdf/2203.08975v2",
+        "published": "2022-03-16"
+    },
+    "2010.03717v1": {
+        "title": "Latent linguistic embedding for cross-lingual text-to-speech and voice conversion",
+        "authors": [
+            "Hieu-Thi Luong",
+            "Junichi Yamagishi"
+        ],
+        "summary": "As the recently proposed voice cloning system, NAUTILUS, is capable of cloning unseen voices using untranscribed speech, we investigate the feasibility of using it to develop a unified cross-lingual TTS/VC system. Cross-lingual speech generation is the scenario in which speech utterances are generated with the voices of target speakers in a language not spoken by them originally. This type of system is not simply cloning the voice of the target speaker, but essentially creating a new voice that can be considered better than the original under a specific framing. By using a well-trained English latent linguistic embedding to create a cross-lingual TTS and VC system for several German, Finnish, and Mandarin speakers included in the Voice Conversion Challenge 2020, we show that our method not only creates cross-lingual VC with high speaker similarity but also can be seamlessly used for cross-lingual TTS without having to perform any extra steps. However, the subjective evaluations of perceived naturalness seemed to vary between target speakers, which is one aspect for future improvement.",
+        "pdf_url": "https://arxiv.org/pdf/2010.03717v1",
+        "published": "2020-10-08"
+    },
+    "2509.20971v2": {
+        "title": "i-LAVA: Insights on Low Latency Voice-2-Voice Architecture for Agents",
+        "authors": [
+            "Anupam Purwar",
+            "Aditya Choudhary"
+        ],
+        "summary": "We experiment with a low-latency, end-to-end voice-to-voice communication model to optimize it for real-time conversational applications. By analyzing components essential to voice to voice (V-2-V) system viz. automatic speech recognition (ASR), text-to-speech (TTS), and dialog management, our work analyzes how to reduce processing time while maintaining high-quality interactions to identify the levers for optimizing V-2-V system. Our work identifies that TTS component which generates life-like voice, full of emotions including natural pauses and exclamations has highest impact on Real time factor (RTF). The experimented V-2-V architecture utilizes CSM1b has the capability to understand tone as well as context of conversation by ingesting both audio and text of prior exchanges to generate contextually accurate speech. We explored optimization of Residual Vector Quantization (RVQ) iterations by the TTS decoder which come at a cost of decrease in the quality of voice generated. Our experimental evaluations also demonstrate that for V-2-V implementations based on CSM most important optimizations can be brought by reducing the number of RVQ Iterations along with the codebooks used in Mimi.",
+        "pdf_url": "https://arxiv.org/pdf/2509.20971v2",
+        "published": "2025-09-25"
+    },
+    "2404.15176v1": {
+        "title": "Voice Passing : a Non-Binary Voice Gender Prediction System for evaluating Transgender voice transition",
+        "authors": [
+            "David Doukhan",
+            "Simon Devauchelle",
+            "Lucile Girard-Monneron",
+            "Mía Chávez Ruz",
+            "V. Chaddouk",
+            "Isabelle Wagner",
+            "Albert Rilliard"
+        ],
+        "summary": "This paper presents a software allowing to describe voices using a continuous Voice Femininity Percentage (VFP). This system is intended for transgender speakers during their voice transition and for voice therapists supporting them in this process. A corpus of 41 French cis- and transgender speakers was recorded. A perceptual evaluation allowed 57 participants to estimate the VFP for each voice. Binary gender classification models were trained on external gender-balanced data and used on overlapping windows to obtain average gender prediction estimates, which were calibrated to predict VFP and obtained higher accuracy than $F_0$ or vocal track length-based models. Training data speaking style and DNN architecture were shown to impact VFP estimation. Accuracy of the models was affected by speakers' age. This highlights the importance of style, age, and the conception of gender as binary or not, to build adequate statistical representations of cultural concepts.",
+        "pdf_url": "https://arxiv.org/pdf/2404.15176v1",
+        "published": "2024-04-23"
+    },
+    "1904.06868v2": {
+        "title": "Singing voice synthesis based on convolutional neural networks",
+        "authors": [
+            "Kazuhiro Nakamura",
+            "Kei Hashimoto",
+            "Keiichiro Oura",
+            "Yoshihiko Nankaku",
+            "Keiichi Tokuda"
+        ],
+        "summary": "The present paper describes a singing voice synthesis based on convolutional neural networks (CNNs). Singing voice synthesis systems based on deep neural networks (DNNs) are currently being proposed and are improving the naturalness of synthesized singing voices. In these systems, the relationship between musical score feature sequences and acoustic feature sequences extracted from singing voices is modeled by DNNs. Then, an acoustic feature sequence of an arbitrary musical score is output in units of frames by the trained DNNs, and a natural trajectory of a singing voice is obtained by using a parameter generation algorithm. As singing voices contain rich expression, a powerful technique to model them accurately is required. In the proposed technique, long-term dependencies of singing voices are modeled by CNNs. An acoustic feature sequence is generated in units of segments that consist of long-term frames, and a natural trajectory is obtained without the parameter generation algorithm. Experimental results in a subjective listening test show that the proposed architecture can synthesize natural sounding singing voices.",
+        "pdf_url": "https://arxiv.org/pdf/1904.06868v2",
+        "published": "2019-04-15"
+    }
+}
