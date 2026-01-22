@@ -30,6 +30,15 @@
             "console": "integratedTerminal",
             "args": [],
             "justMyCode": false
+        },
+        {
+            "name": "prompt_caching",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "scripts.bedrock.prompt_caching.test",
+            "console": "integratedTerminal",
+            "args": [],
+            "justMyCode": false
         }
     ]
 }
