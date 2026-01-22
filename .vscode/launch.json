@@ -35,7 +35,7 @@
             "name": "prompt_caching",
             "type": "debugpy",
             "request": "launch",
-            "module": "scripts.bedrock.prompt_caching.test",
+            "module": "scripts.bedrock.prompt_caching.compare",
             "console": "integratedTerminal",
             "args": [],
             "justMyCode": false
