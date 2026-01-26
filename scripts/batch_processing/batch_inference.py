@@ -3,73 +3,62 @@ import json
 import time
 import os
 from datetime import datetime
-from typing import List, Dict, Optional
-from loguru import logger
-from typing import Tuple
+from typing import List, Dict
 from urllib.parse import urlparse
+from loguru import logger
 
 
-class S3Utils:
-    def __init__(self, session: boto3.Session, region_name: str = "us-east-1"):
-        self.s3_client = session.client("s3", region_name=region_name)
+class BedrockBatchProcessing:
+    def __init__(self, region_name: str):
+        self.bedrock = boto3.client("bedrock", region_name=region_name)
+        self.s3 = boto3.client("s3", region_name=region_name)
 
-    @staticmethod
-    def parse_s3_uri(s3_uri: str) -> Tuple[str, str]:
-        """Parses s3://bucket/key into (bucket, key)"""
-        parsed = urlparse(s3_uri)
-        return parsed.netloc, parsed.path.lstrip("/")
-
-    def upload_file(self, local_path: str, s3_uri: str) -> str:
-        bucket, key = self.parse_s3_uri(s3_uri)
-        try:
-            self.s3_client.upload_file(local_path, bucket, key)
-            logger.info(f"Uploaded {local_path} to {s3_uri}")
-            return s3_uri
-        except Exception as e:
-            logger.error(f"Failed to upload to S3: {e}")
-            raise
-
-    def download_file(self, s3_uri: str, local_path: str) -> str:
-        bucket, key = self.parse_s3_uri(s3_uri)
-        try:
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            self.s3_client.download_file(bucket, key, local_path)
-            logger.info(f"Downloaded {s3_uri} to {local_path}")
-            return local_path
-        except Exception as e:
-            logger.error(f"Failed to download from S3: {e}")
-            raise
-
-
-class BedrockBatchManager:
-    def __init__(
-        self, region_name: str = "us-east-1", profile_name: Optional[str] = None
-    ):
-        session = boto3.Session(profile_name=profile_name, region_name=region_name)
-        self.bedrock = session.client("bedrock")
-        self.s3_utils = S3Utils(session, region_name=region_name)
-        self.region = region_name
-
-    def prepare_jsonl(self, prompts: List[Dict], output_file: str) -> str:
-        with open(file=output_file, mode="w") as f:
+    def prepare_jsonl(
+        self,
+        prompts: List[Dict],
+        output_file: str,
+        default_max_tokens: int = 1024,
+    ) -> str:
+        with open(output_file, "w") as f:
             for i, item in enumerate(prompts):
                 record = {
                     "recordId": item.get("id", f"record_{i:06d}"),
                     "modelInput": {
                         "anthropic_version": "bedrock-2023-05-31",
-                        "max_tokens": item.get("max_tokens", 1024),
+                        "max_tokens": item.get("max_tokens", default_max_tokens),
                         "messages": [
                             {
                                 "role": "user",
-                                "content": [{"type": "text", "text": item["prompt"]}],
+                                "content": [
+                                    {"type": "text", "text": item["prompt"]},
+                                ],
                             }
                         ],
                     },
                 }
+                if "system" in item:
+                    record["modelInput"]["system"] = item["system"]
                 f.write(json.dumps(record) + "\n")
-        logger.info(f"Generated input file: {output_file} ({len(prompts)} records)")
+
+        logger.info(f"Created {output_file} with {len(prompts)} records")
         return output_file
+
+    def upload_to_s3(self, local_path: str, s3_uri: str) -> str:
+        """Upload file to S3."""
+        parsed = urlparse(s3_uri)
+        bucket, key = parsed.netloc, parsed.path.lstrip("/")
+        self.s3.upload_file(local_path, bucket, key)
+        logger.info(f"Uploaded to {s3_uri}")
+        return s3_uri
+
+    def download_from_s3(self, s3_uri: str, local_path: str) -> str:
+        """Download file from S3."""
+        parsed = urlparse(s3_uri)
+        bucket, key = parsed.netloc, parsed.path.lstrip("/")
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        self.s3.download_file(bucket, key, local_path)
+        logger.info(f"Downloaded to {local_path}")
+        return local_path
 
     def submit_job(
         self,
@@ -79,124 +68,124 @@ class BedrockBatchManager:
         output_s3_uri: str,
         role_arn: str,
     ) -> str:
-        try:
-            response = self.bedrock.create_model_invocation_job(
-                roleArn=role_arn,
-                modelId=model_id,
-                jobName=job_name,
-                inputDataConfig={"s3InputDataConfig": {"s3Uri": input_s3_uri}},
-                outputDataConfig={"s3OutputDataConfig": {"s3Uri": output_s3_uri}},
-            )
-            job_arn = response["jobArn"]
-            logger.info(f"Job submitted successfully. ARN: {job_arn}")
-            return job_arn
-        except Exception as e:
-            logger.error(f"Error submitting job: {e}")
-            raise
+        """Submit batch job and return job ARN."""
+        response = self.bedrock.create_model_invocation_job(
+            roleArn=role_arn,
+            modelId=model_id,
+            jobName=job_name,
+            inputDataConfig={"s3InputDataConfig": {"s3Uri": input_s3_uri}},
+            outputDataConfig={"s3OutputDataConfig": {"s3Uri": output_s3_uri}},
+        )
+        job_arn = response["jobArn"]
+        logger.info(f"Submitted job: {job_arn}")
+        return job_arn
 
     def wait_for_job(self, job_arn: str, poll_interval: int = 60) -> Dict:
-        """Blocks and monitors job until terminal state"""
-        logger.info(f"Monitoring job: {job_arn}")
-        start_time = time.time()
+        terminal_states = {"Completed", "Failed", "Stopped"}
+        start = time.time()
 
         while True:
             response = self.bedrock.get_model_invocation_job(jobIdentifier=job_arn)
             status = response["status"]
+            elapsed = (time.time() - start) / 60
 
-            if status in ["Completed", "Failed", "Stopped"]:
-                duration = (time.time() - start_time) / 60
-                logger.info(
-                    f"Job ended with status: {status} (Duration: {duration:.1f}m)"
-                )
+            if status in terminal_states:
+                logger.info(f"Job {status} after {elapsed:.1f} minutes")
                 return response
 
-            logger.info(f"Status: {status}...")
+            logger.info(f"Status: {status} ({elapsed:.1f}m elapsed)")
             time.sleep(poll_interval)
 
-    def process_results(self, job_response: Dict) -> None:
+    def get_results(
+        self, job_response: Dict, output_dir: str = "results"
+    ) -> List[Dict]:
         if job_response["status"] != "Completed":
-            logger.warning("Job did not complete successfully. Skipping analysis.")
-            return
-
-        # 1. Locate Output Manifest
-        # The output path in the response points to the folder, we need the manifest file
-        # Format usually: s3://bucket/prefix/job-id/manifest.json.out
-        # Note: Bedrock creates a subfolder with the Job ID.
-
-        output_config = job_response.get("outputDataConfig", {}).get(
-            "s3OutputDataConfig", {}
-        )
-        s3_output_uri = output_config.get("s3Uri")
-
-        # Bedrock appends a directory with the Job ID + manifest.json.out seems to be inside or defined in documentation
-        # Actually, let's look for where the manifest really is.
-        # It's safest to construct the manifest path if we know the job structure,
-        # but often it's easier to list the bucket or assume standard structure:
-        # <output_uri>/<job_id>/manifest.json.out
+            logger.error(f"Job not completed: {job_response['status']}")
+            return []
 
         job_id = job_response["jobArn"].split("/")[-1]
-        manifest_s3_uri = f"{s3_output_uri.rstrip('/')}/{job_id}/manifest.json.out"
+        output_base = job_response["outputDataConfig"]["s3OutputDataConfig"]["s3Uri"]
+        output_uri = f"{output_base.rstrip('/')}/{job_id}/"
 
-        local_manifest_path = f"results/{job_id}_manifest.json"
+        # List and download output files
+        parsed = urlparse(output_uri)
+        bucket, prefix = parsed.netloc, parsed.path.lstrip("/")
 
-        try:
-            logger.info(f"Attempting to download manifest from: {manifest_s3_uri}")
-            self.s3_utils.download_file(manifest_s3_uri, local_manifest_path)
-        except Exception as e:
-            logger.error(f"Could not retrieve or parse manifest: {e}")
-            logger.info("Tip: Verify the output S3 path structure manually.")
+        os.makedirs(output_dir, exist_ok=True)
+        results = []
+
+        response = self.s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        for obj in response.get("Contents", []):
+            key = obj["Key"]
+            if key.endswith(".jsonl.out"):
+                local_file = os.path.join(output_dir, os.path.basename(key))
+                self.s3.download_file(bucket, key, local_file)
+
+                with open(local_file) as f:
+                    for line in f:
+                        results.append(json.loads(line))
+
+        logger.info(f"Retrieved {len(results)} results")
+        return results
 
 
 def main():
-    REGION = "ap-southeast-1"
-    MODEL_ID = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
-    ROLE_ARN = "arn:aws:iam::061051247257:role/AmazonBedrockServiceRole-c6alv2tvqgyh0n-3qurb3xkdy6pif"
-    BUCKET = "ptp-dev-aidata-bronze"
-    PREFIX = "lk_conversational_simulation/batch-inference"
+    # === CONFIGURATION ===
+    CONFIG = {
+        "region": "ap-southeast-1",
+        "model_id": "apac.anthropic.claude-sonnet-4-20250514-v1:0",
+        "role_arn": "arn:aws:iam::061051247257:role/ptp-dev-aidata-ds-sagemaker-bedrock-execution-role",
+        "bucket": "ptp-dev-aidata-bronze",
+        "prefix": "lk_conversational_simulation/batch-inference",
+    }
 
-    # Initialize Manager
-    manager = BedrockBatchManager(region_name=REGION)
+    # === SETUP ===
+    manager = BedrockBatchProcessing(region_name=CONFIG["region"])
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    job_name = f"test-batch-{timestamp}"
 
+    # === TEST PROMPTS ===
     prompts = [
         {
             "id": f"req_{i}",
-            "prompt": "Explain quantum computing briefly.",
+            "prompt": "Explain quantum computing in one sentence.",
             "max_tokens": 100,
         }
-        for i in range(10)
+        for i in range(101)
     ]
 
+    # === RUN BATCH JOB ===
+    # 1. Prepare input
     local_input = manager.prepare_jsonl(prompts, "input_batch.jsonl")
 
-    # --- 3. Upload to S3 ---
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    input_s3_key = f"{PREFIX}/{timestamp}/input.jsonl"
-    input_uri = f"s3://{BUCKET}/{input_s3_key}"
-    # Bedrock requires the s3Uri for outputDataConfig to end with a trailing "/"
-    # and point to a prefix (folder), not a specific object.
-    output_uri = f"s3://{BUCKET}/{PREFIX}/{timestamp}/output/"
+    # 2. Upload to S3
+    input_uri = f"s3://{CONFIG['bucket']}/{CONFIG['prefix']}/{job_name}/input.jsonl"
+    output_uri = f"s3://{CONFIG['bucket']}/{CONFIG['prefix']}/{job_name}/output/"
+    manager.upload_to_s3(local_input, input_uri)
 
-    # NOTE: Commented out to prevent accidental execution without valid credentials
-    manager.s3_utils.upload_file(local_input, input_uri)
+    # 3. Submit job
+    job_arn = manager.submit_job(
+        job_name=job_name,
+        model_id=CONFIG["model_id"],
+        input_s3_uri=input_uri,
+        output_s3_uri=output_uri,
+        role_arn=CONFIG["role_arn"],
+    )
 
-    print("\n--- Dry Run Configuration ---")
-    print(f"Model: {MODEL_ID}")
-    print(f"Input: {input_uri}")
-    print(f"Output: {output_uri}")
+    # 4. Wait for completion
+    job_response = manager.wait_for_job(job_arn)
 
-    # --- 4. Submit & Monitor (Uncomment to run) ---
-    job_name = f"batch-job-{timestamp}"
-    job_arn = manager.submit_job(job_name, MODEL_ID, input_uri, output_uri, ROLE_ARN)
-    job_result = manager.wait_for_job(job_arn)
+    # 5. Get results
+    results = manager.get_results(job_response)
 
-    # Export job_result to a JSON file for later inspection
-    os.makedirs("results", exist_ok=True)
-    job_result_path = f"results/{job_name}_result.json"
-    with open(job_result_path, "w") as f:
-        json.dump(job_result, f, indent=2, default=str)
-    logger.info(f"Saved job_result to {job_result_path}")
-
-    manager.process_results(job_result)
+    # === DISPLAY RESULTS ===
+    for r in results:
+        record_id = r.get("recordId", "?")
+        if "error" in r:
+            print(f"[{record_id}] ERROR: {r['error']}")
+        else:
+            text = r.get("modelOutput", {}).get("content", [{}])[0].get("text", "")
+            print(f"[{record_id}] {text[:100]}")
 
 
 if __name__ == "__main__":
